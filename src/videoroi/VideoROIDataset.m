@@ -136,6 +136,12 @@ classdef VideoROIDataset < handle
             [s, m, header] = read_idf(sourceFile);
             data = idf_split_trials(s, m);
             
+            % Add empty stimulus information
+            for t_id = 1:length(data)
+                data(t_id).stimulus = struct('name', {}, 'frame', {}, ...
+                    'onset', {}, 'offset', {}, 'position', {});
+            end;            
+            
             % Perform task specific message parsing
             if(~isempty(obj.taskName))
                 task = VideoROITaskFactory.obtainTaskInstance(obj.taskName);            

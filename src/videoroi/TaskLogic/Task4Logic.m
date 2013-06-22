@@ -34,7 +34,7 @@ classdef Task4Logic < handle
             for t = 1:length(data)
                 frameNrs = unique(frameData(t).frames);
                 frameNrs(isnan(frameNrs)) = [];
-                
+
                 s = 1;
                 
                 for f = frameNrs'
