@@ -586,12 +586,34 @@ classdef VideoROIView < EventProvider
                 
                 fileTypes = {'*.wmv', 'Video files'; '*.jpg', 'Image files'};
                 
-                [filename, pathname] = uigetfile(fileTypes, 'Add stimulus');
-            
-                if(filename ~= 0)
-                    filename = fullfile(pathname, filename);
-                    obj.invokeEventListeners('addStimulus', filename);
+                [filenames, pathname] = uigetfile( ...
+                    fileTypes, 'Add stimulus', ...
+                    'MultiSelect', 'On');
+                
+                % No file selected, return
+                if(~iscell(filenames) && filenames == 0)
+                    return
+                end;
+                
+                % If one file was selected, create a cell
+                if(~iscell(filenames))
+                    filenames = {filenames};
                 end
+                
+                h = waitbar(0, 'Adding stimuli');
+                
+                for i = 1:length(filenames)
+                    waitbar(i/length(filenames), h);
+                    try
+                        filename = fullfile(pathname, filenames{i});
+                        obj.invokeEventListeners('addStimulus', filename);
+                    catch e
+                        obj.displayError(['Could not import stimulus.' ...
+                            10 10 'Error: ' e.message]);
+                    end;
+                end
+                
+                close(h);
             else
                 warndlg('No active project, unable to add stimulus.');
             end
@@ -637,10 +659,23 @@ classdef VideoROIView < EventProvider
         %        
         function onAddDataset(obj, ~)
             if(obj.currentProjectPath ~= 0)                
-                [filename, pathname] = uigetfile({'*.txt', 'Datasets'}, 'Add dataset');
-            
-                if(filename ~= 0)
-                    filename = fullfile(pathname, filename);
+                [filenames, pathname] = uigetfile( ...
+                    {'*.txt', 'Datasets'}, 'Add dataset', ...
+                    'MultiSelect', 'On');
+                
+                % No file selected, return
+                if(~iscell(filenames) && filenames == 0)
+                    return
+                end;
+                
+                % If one file was selected, create a cell
+                if(~iscell(filenames))
+                    filenames = {filenames};
+                end
+
+                % Loop over all selected files and insert them
+                for i = 1:length(filenames)
+                    filename = fullfile(pathname, filenames{i});
                     obj.invokeEventListeners('addDataset', filename);
                 end
             else
