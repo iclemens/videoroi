@@ -3,7 +3,8 @@ videoroi
 
 Matlab script for defining regions of interest in videos.
 
-=Copyright and license=
+Copyright and license
+---------------------
 
 This software uses the mmread library.
 Copyright (c) 2005, Micah Richert
