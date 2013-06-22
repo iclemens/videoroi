@@ -133,8 +133,7 @@ classdef VideoROIDataset < handle
                 data = task.parseStimulusMsgs(data);
             end
             
-            taskName = obj.taskName;
-            
+            taskName = obj.taskName;            
             version = 2;
 
             save(cacheFile, 'version', 'header', 'data', 'taskName');
@@ -266,10 +265,28 @@ classdef VideoROIDataset < handle
             minimum_fixation_duration = 0.1; %100ms
             extension_angle_threshold = 0.5 * pi;
             
+            col_time = idf_find_columns({'Time'}, obj.header);
             col_gaze = idf_find_columns({'R Gaze X [rad]', 'R Gaze Y [rad]'}, obj.header);
             
+            % Determine which columns to use
+            if(isempty(col_time))
+                error('VideoROI:DatasetInvalid', ...
+                    'Selected dataset does not contain timestamp.');
+            end
+            
+            if(isempty(col_gaze))
+                error('VideoROI:DatasetInvalid', ...
+                    'Selected dataset does not contain gaze information.');
+            end
+            
             for t = 1:length(obj.data)
-                time = obj.data(t).samples(:, 1) * 1e-6;
+                % Raise an error when the dataset is empty                
+                if(size(obj.data(t).samples, 2) == 0)
+                    error('VideoROI:InvalidSize', ...
+                        ['Matrix for trail ' num2str(t) ' does not have enough columns.']);
+                end
+                
+                time = obj.data(t).samples(:, col_time) * 1e-6;
                 gaze = obj.data(t).samples(:, col_gaze);
                 
                 saccades = obj.findSaccades(time, gaze, saccade_threshold, extension_angle_threshold); 
