@@ -3,6 +3,10 @@ videoroi
 
 Matlab script for defining regions of interest in videos.
 
+To start the tool, add the _src_ directory to the Matlab path and run _VideoROITool_.
+ 
+The software stores all stimulus material, ROI definitions and datasets in a special directory called a _project directory_. At the start of the program, it will ask you to open a project. To start a new project, just create an empty directory and open that. To continue orking on a past project, just open your project directory. You can then use the GUI to add stimuli or datasets to your project.
+
 Copyright and license
 ---------------------
 
