@@ -6,13 +6,12 @@ function VideoROITool(projectDir)
 path = fileparts(mfilename('fullpath'));
 
 % Add source directories to path
-warning off;
 addpath(path);
 addpath(fullfile(path, 'idf'));
 addpath(fullfile(path, 'gui'));
 addpath(fullfile(path, 'gui/controls'));
 addpath(fullfile(path, 'videoroi'));
-warning on;
+addpath(fullfile(path, 'mmread'));
 
 if(nargin == 0)
     projectDir = uigetdir('', 'Open project directory');
