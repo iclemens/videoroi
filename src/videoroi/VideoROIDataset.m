@@ -63,7 +63,7 @@ classdef VideoROIDataset < handle
             % Dataset messages have not been processed,
             % either no task has been selected or the task is
             % invalid.
-            if ~isfield(obj.data, 'stimuli')
+            if ~isfield(obj.data, 'stimulus')
                 err = MException('VideoROI:NoStimuli', ...
                     'Cannot get trials for stimulus because no stimuli have been defined.');
                 throw(err);
@@ -95,6 +95,12 @@ classdef VideoROIDataset < handle
         
         function [samples, columns] = getAnnotationsForFrame(obj, trialId, frameNr)
             sel = cellfun(@(x) ~isempty(x) && x == frameNr, {obj.data(trialId).stimulus.frame});            
+            
+            if isempty(sel)
+                [samples, columns] = obj.getAnnotationsForInterval(trialId, 0, 0);
+                return
+            end
+            
             [samples, columns] = obj.getAnnotationsForInterval(trialId, obj.data(trialId).stimulus(sel).onset, obj.data(trialId).stimulus(sel).offset);
         end
 
@@ -115,6 +121,12 @@ classdef VideoROIDataset < handle
             intervalMask = first:last;
             
             samples = [dta.samples(intervalMask, cols), dta.fixation_mask(intervalMask), dta.saccade_mask(intervalMask)];
+            
+            % There are no samples within the interval, but we'll make sure
+            % that the right amount of columns will be returned.
+            if(isempty(samples))
+                samples = zeros(0, length(columns));
+            end
         end
         
     end

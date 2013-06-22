@@ -200,17 +200,18 @@ classdef VideoROI < handle
             end
             
             % Redraw using saccades/fixation from loaded dataset
-            try
+             try
                 obj.refreshFrame();
-            catch e
-                % Unload dataset
-                obj.onChangeDataset(0, 0);
-                
-                % Display error
-                obj.view.displayError([e.message 10 ...
-                    'The currently selected task might not support stimuli.' 10 ...
-                    'Make sure the correct task is selected (see project menu).']);
-            end
+             catch e
+                 % Unload dataset
+                 obj.onChangeDataset(0, 0);
+                 
+                 % Display error
+                 obj.view.displayError([e.message 10 ...
+                     'The selected dataset might not contain trials ' 10 ...
+                     'in which the selected stimulus was presented, ' 10 ...
+                     'or the selected task might not be valid.']);
+             end
         end          
         
         
