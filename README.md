@@ -13,9 +13,11 @@ Concepts
 
 All projects consist of two types of items:
  * Stimuli
+
    Either images or videos which are shown to the participant during the experiment. For each stimulus regions of interest (ROIs) can be defined. These are currently limited to rectangular areas and are specified in native stimulus coordinates.
 
  * Datasets
+
    There is one dataset containing eye movement information for every participant. Each dataset consists of a number of trials, and in turn every trial contains one or more stimulus presentations. In other words, there is a per-trial list containing onset time, duration and on-screen location for every stimulus. If the stimulus is a video, every frame is considered separately.
 
 In addition a _task_ can be set. A task is a specific set of functions which read stimulus locations from the dataset and have some insight into how the data should be analyzed (i.e. which intervals should be considered and which should not).
