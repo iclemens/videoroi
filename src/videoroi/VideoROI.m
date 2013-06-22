@@ -58,8 +58,7 @@ classdef VideoROI < handle
             obj.view.addEventListener('changeStimulus', @(src, index) obj.onChangeStimulus(src, index));
             obj.view.addEventListener('changeDataset', @(src, index) obj.onChangeDataset(src, index));
             
-            obj.view.addEventListener('playVideo', @(src) obj.onPlayVideo(src));
-            obj.view.addEventListener('pauseVideo', @(src) obj.onPauseVideo(src));            
+            obj.view.addEventListener('playPauseVideo', @(src) obj.onPlayPauseVideo(src));
             
             obj.view.addEventListener('setTask', @(src, taskName) obj.onSetTask(src, taskName));
             
@@ -325,27 +324,27 @@ classdef VideoROI < handle
         end        
 
         
-        function onPlayVideo(obj, src)
-            % Only start timer in case it is currently stopped.
+        function onPlayPauseVideo(obj, ~)
+            % Start timer if it is stopped, otherwise stop timer
             if(strcmp(get(obj.playbackTimer, 'Running'), 'off'))
                 start(obj.playbackTimer);
+                obj.view.setPlayingState(true);
+            else
+                stop(obj.playbackTimer);
+                obj.view.setPlayingState(false);
             end;
-        end
+        end        
+       
         
-        
-        function onTimerTick(obj, src)            
+        function onTimerTick(obj, ~)            
             if(obj.frameIndex == obj.stimulus.getNumberOfFrames)
                 stop(obj.playbackTimer);
+                obj.view.setPlayingState(false);
             else            
                 obj.view.setCurrentFrame(obj.frameIndex + 1);
             end
         end
-        
-        
-        function onPauseVideo(obj, src)
-            stop(obj.playbackTimer);
-        end        
-        
+                      
         
         %%%%%%%%%%%%%%%%%%%%%%%
         % Region of interests %

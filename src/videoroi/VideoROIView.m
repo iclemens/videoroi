@@ -4,6 +4,8 @@ classdef VideoROIView < EventProvider
         % GUI Components
         mainWindow;
         
+        playPauseButton;        
+       
         frameAxes;
         frameImage;
         frameSlider;
@@ -296,6 +298,17 @@ classdef VideoROIView < EventProvider
             errordlg(message);
         end
 
+
+        %
+        % Sets playing state (true is playing, false is stopped).
+        %
+        function setPlayingState(obj, playing)
+            if(playing)
+                obj.playPauseButton.setLabel('Pause');
+            else
+                obj.playPauseButton.setLabel('Play');
+            end;
+        end
         
     end
 
@@ -316,21 +329,16 @@ classdef VideoROIView < EventProvider
             obj.frameSlider = GUISlider();
             obj.frameSlider.addEventListener('change', @(x) obj.onFrameSliderChanged(x));
             
-            playButton = GUIButton();
-            playButton.addEventListener('click', @(src) obj.onPlayButtonClicked(src));
-            playButton.setLabel('Play');
-            
-            pauseButton = GUIButton();
-            pauseButton.addEventListener('click', @(src) obj.onPauseButtonClicked(src));
-            pauseButton.setLabel('Pause');
-            
+            obj.playPauseButton = GUIButton();
+            obj.playPauseButton.addEventListener('click', @(src) obj.onPlayPauseButtonClicked(src));
+            obj.playPauseButton.setLabel('Play');
+           
             controlbar = GUIBoxArray();
             controlbar.setMargin([0 0 0 0]);
             controlbar.setHorizontalDistribution([NaN 25 25]);
-            controlbar.addComponent(obj.frameSlider)
-            controlbar.addComponent(playButton);
-            controlbar.addComponent(pauseButton);                        
-            
+            controlbar.addComponent(obj.frameSlider)            
+            controlbar.addComponent(obj.playPauseButton);
+                        
             obj.frameLabel = GUILabel('Frame ? of #');
             
             horizontalSplit = GUIBoxArray();
@@ -641,15 +649,9 @@ classdef VideoROIView < EventProvider
         end
         
                  
-        function onPlayButtonClicked(obj, ~)
-            obj.invokeEventListeners('playVideo');
-        end
-        
-        
-        function onPauseButtonClicked(obj, ~)
-            obj.invokeEventListeners('pauseVideo');
-        end
-        
+        function onPlayPauseButtonClicked(obj, ~)
+            obj.invokeEventListeners('playPauseVideo');
+        end                       
         
         %
         % Function called when a dataset has been selected
