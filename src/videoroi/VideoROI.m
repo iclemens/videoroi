@@ -181,7 +181,7 @@ classdef VideoROI < handle
         %%%%%%%%%%%%
 
 
-        function onChangeDataset(obj, src, index)
+        function onChangeDataset(obj, ~, index)
             % Delete previously loaded dataset
             if(~isempty(obj.dataset))
                 delete(obj.dataset);
@@ -200,7 +200,17 @@ classdef VideoROI < handle
             end
             
             % Redraw using saccades/fixation from loaded dataset
-            obj.refreshFrame();
+            try
+                obj.refreshFrame();
+            catch e
+                % Unload dataset
+                obj.onChangeDataset(0, 0);
+                
+                % Display error
+                obj.view.displayError([e.message 10 ...
+                    'The currently selected task might not support stimuli.' 10 ...
+                    'Make sure the correct task is selected (see project menu).']);
+            end
         end          
         
         

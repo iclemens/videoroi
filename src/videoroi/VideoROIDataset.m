@@ -60,6 +60,15 @@ classdef VideoROIDataset < handle
             
             list = [];
             
+            % Dataset messages have not been processed,
+            % either no task has been selected or the task is
+            % invalid.
+            if ~isfield(obj.data, 'stimuli')
+                err = MException('VideoROI:NoStimuli', ...
+                    'Cannot get trials for stimulus because no stimuli have been defined.');
+                throw(err);
+            end
+            
             for t = 1:length(obj.data)
                 for s = 1:length(obj.data(t).stimulus)
                     
