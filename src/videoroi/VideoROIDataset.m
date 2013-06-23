@@ -113,7 +113,7 @@ classdef VideoROIDataset < handle
             cols = idf_find_columns(columns, obj.header);
             
             columns{end + 1} = 'Fixation mask';
-            columns{end + 2} = 'Saccade mask';
+            columns{end + 1} = 'Saccade mask';
             
             % Handle infinity (i.e. from beginning or until end)
             if(isinf(first)) || (first < 1), first = 1; end;
