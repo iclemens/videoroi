@@ -170,7 +170,7 @@ classdef VideoROIRegions < handle
             roiPositions = obj.roiPositions;
             sceneChanges = obj.sceneChanges;
             videoName = obj.stimInfo.name;
-            release = 3;
+            release = 4;
             
             save(filename, 'numROIs', 'roiLabels', 'roiStates', 'roiPositions', 'release', 'sceneChanges', 'videoName');
         end
@@ -196,12 +196,28 @@ classdef VideoROIRegions < handle
                 release = data.release;
             end;
             
+            % Up to release 4 the axes dimensions were swapped.
+            % As only 640x480 videos were used in these version,
+            % it is easily correctable.
+            if(release < 4)
+                fixed = zeros(size(obj.roiPositions));
+                fixed(:, :, 1) = obj.roiPositions(:, :, 1) / 480 * 640;
+                fixed(:, :, 2) = obj.roiPositions(:, :, 2) / 640 * 480;
+                fixed(:, :, 3) = obj.roiPositions(:, :, 3) / 480 * 640;
+                fixed(:, :, 4) = obj.roiPositions(:, :, 4) / 640 * 480;
+                
+                obj.roiPositions = fixed;                
+            end                        
+            
+            % Only releases > 2 have scene-change information.
             if(release >= 2)
                 obj.sceneChanges = data.sceneChanges;
             else
                 obj.sceneChanges = [1 zeros(1, obj.numFrames - 1)];
             end
             
+            % From release 3 on we store the name of the video
+            %  the stimulus belongs to.
             if(release >= 3)
                 [~, name, ~] = fileparts(data.videoName);
                 
@@ -217,7 +233,7 @@ classdef VideoROIRegions < handle
                         error('The ROI-file you are trying to load does not match the stimulus.');
                     end
                 end
-            end
+            end            
         end
         
     end

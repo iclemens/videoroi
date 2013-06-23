@@ -297,7 +297,7 @@ classdef VideoROI < handle
                 if(obj.currentStimulusTrial == -1)
                     obj.currentStimulusTrial = obj.dataset.getTrialsWithStimulus(obj.currentStimulus);
                 end
-                                                
+
                 samples = obj.dataset.getAnnotationsForFrame(obj.currentStimulusTrial, obj.frameIndex);
                 
                 % Fixme! Should transform eye coordinates into image
