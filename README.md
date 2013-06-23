@@ -23,6 +23,20 @@ All projects consist of two types of items:
 In addition a _task_ can be set. A task is a specific set of functions which read stimulus locations from the dataset and have some insight into how the data should be analyzed (i.e. which intervals should be considered and which should not).
 
 
+Output format
+-------------
+
+The analysis for task 4 produces a CSV file with the following columns:
+
+ 1. Dataset name (which participant)
+ 2. Video or stimulus name
+ 3. ROI label
+ 4. ROI numeric identifier
+ 5. Start of fixation
+ 6. End of fixation
+ 7. Fixationduration
+
+
 Copyright and license
 ---------------------
 
