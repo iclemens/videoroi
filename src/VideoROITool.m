@@ -2,7 +2,7 @@ function VideoROITool(projectDir)
 % VIDEOROITOOL allows one to define regions-of-interest
 %  in movie frames.
 
-% Determine directory wheter m-file is located
+% Determine directory where the m-file is located
 path = fileparts(mfilename('fullpath'));
 
 % Add source directories to path
