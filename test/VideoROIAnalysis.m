@@ -53,7 +53,6 @@ function VideoROIAnalysis(cfg)
             
             if(clusterRunning && ( ...
                 ~samples(s, 2) || ...                              % Fixation ended
-                samples(s, 3) ~= samples(clusterStarted, 3) || ... % Diff. stim
                 samples(s, 4) ~= samples(clusterStarted, 4)))      % Different ROI
             
                 clusterRunning = false;                                
@@ -151,7 +150,7 @@ function VideoROIAnalysis(cfg)
         
         % Open output file and write header
         outputFile = fopen(cfg.outputFile, 'w');        
-        fwrite(outputFile, '"dataset", "stimulus", "roi_name", "roi", "t_fix_start", "t_fix_stop", "fix_duration"\n');       
+        fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "t_fix_start", "t_fix_stop", "fix_duration"\r\n');       
                         
         numDatasets = project.getNumberOfDatasets();        
         
@@ -181,7 +180,8 @@ function VideoROIAnalysis(cfg)
     end
 
     % Determine directory where m-file is located
-    path = fileparts(mfilename('fullpath'), '..');
+    path = fileparts(mfilename('fullpath'));
+    path = fullfile(path, '..', 'src');    
 
     % Add source directories to path
     addpath(path);
