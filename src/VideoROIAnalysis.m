@@ -155,7 +155,7 @@ function VideoROIAnalysis(cfg)
         numDatasets = project.getNumberOfDatasets();        
         
         % Loop over datasets and trials
-        for d = 1:1 %numDatasets
+        for d = 1:numDatasets
             dataset_info = project.getInfoForDataset(d);
             dataset = VideoROIDataset(dataset_info, 'Task4Logic');
             
