@@ -203,11 +203,15 @@ classdef VideoROIRegions < handle
             end
             
             if(release >= 3)
-                if(~strcmpi(data.videoName, obj.stimInfo.name))
+                [~, name, ~] = fileparts(data.videoName);
+                
+                if(~strcmpi(data.videoName, obj.stimInfo.name) && ~strcmpi(obj.stimInfo.name, name))
                     disp(['Currently loaded stimulus:       ' obj.stimInfo.name]);
                     disp(['Stimulus loaded at ROI creation: ' data.videoName]);
                                         
-                    a = questdlg(['The ROI-file you are trying to load does not match the stimulus.' 10 'Do you want to continue?'], 'Stimulus mismatch', 'Yes', 'No', 'No');
+                    a = questdlg(['The ROI-file you are trying to load does not match the stimulus.' 10 ...
+                        'Do you want to continue?' ...
+                        10 10 'Stimulus: ' obj.stimInfo.name 10 'ROI: ' data.videoName], 'Stimulus mismatch', 'Yes', 'No', 'No');
                     
                     if(strcmp(a, 'No'))
                         error('The ROI-file you are trying to load does not match the stimulus.');
