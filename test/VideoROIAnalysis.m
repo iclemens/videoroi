@@ -33,6 +33,44 @@ function VideoROIAnalysis(cfg)
     end
 
 
+    function analysis_result_to_file(cfg, samples)
+    % ANALYSIS_RESULT_TO_FILE  Writes the results of the analysis to file.
+        clusterRunning = false;
+        clusterStarted = 1;
+        
+        % Only keep time, fixation mask, stimulus and roi number
+        samples = samples(:, [1 4 6 7]);
+        
+        for s = 1:size(samples, 1)
+            if(~clusterRunning && samples(s, 2) && samples(s, 4) > 0)
+                clusterRunning = true;
+                clusterStarted = s;
+            end
+            
+            if(clusterRunning && ( ...
+                ~samples(s, 2) || ...                              % Fixation ended
+                samples(s, 3) ~= samples(clusterStarted, 3) || ... % Diff. stim
+                samples(s, 4) ~= samples(clusterStarted, 4)))      % Different ROI
+            
+                clusterRunning = false;                                
+
+                duration = samples(s-1, 1) - samples(clusterStarted, 1);
+                
+                if(duration < 1000), continue; end;
+                
+                fprintf(cfg.outputFile, '"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
+                    cfg.dataset_info.name, ...
+                    cfg.stimuli( samples(s-1,3) ).name, ...
+                    '', ...
+                    samples(s-1, 4), ...
+                    samples(clusterStarted, 1), ...
+                    samples(s-1, 1), ...
+                    duration);            
+            end
+        end
+    end
+
+
     function perform_analysis_trial(cfg)
     % PERFORM_ANALYSIS_TRIAL  Peforms the analysis for a single trial only.
     
@@ -79,8 +117,7 @@ function VideoROIAnalysis(cfg)
                 position = squeeze(roiPosition(r, :));                
                 xr = position(1) + [0 position(3)];
                 yr = position(2) + [0 position(4)];
-                
-                
+                                
                 xoverlap = min(samples(sample_slc, 2), xr(2)) - max(samples(sample_slc, 2), xr(1));
                 yoverlap = min(samples(sample_slc, 3), yr(2)) - max(samples(sample_slc, 3), yr(1));                
                 overlap = (xoverlap .* yoverlap);
@@ -93,7 +130,12 @@ function VideoROIAnalysis(cfg)
             
             % Remove fixation mark when scene has just changed
             % TODO
-        end;                
+        end;
+
+        analysis_result_to_file(cfg, samples);
+        
+        % FIXME: We need some visualization here to verify that
+        %  the samples matrix is correct.
     end
 
 
@@ -110,7 +152,7 @@ function VideoROIAnalysis(cfg)
         numDatasets = project.getNumberOfDatasets();        
         
         % Loop over datasets and trials
-        for d = 1:numDatasets
+        for d = 1:1 %numDatasets
             dataset_info = project.getInfoForDataset(d);
             dataset = VideoROIDataset(dataset_info, 'Task4Logic');
             
@@ -120,7 +162,9 @@ function VideoROIAnalysis(cfg)
                 cfg = struct();
                 cfg.trial_index = t;
                 cfg.project = project;
-                cfg.outputFile = outputFile;                
+                cfg.outputFile = outputFile;
+                cfg.dataset_info = dataset_info;
+                
                 cfg.dataset = dataset;
                 cfg.stimuli = stimuli;
                 
