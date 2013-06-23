@@ -94,13 +94,14 @@ classdef VideoROIDataset < handle
                        
         
         function [samples, columns] = getAnnotationsForFrame(obj, trialId, frameNr)
-            sel = cellfun(@(x) ~isempty(x) && x == frameNr, {obj.data(trialId).stimulus.frame});            
+            sel = cellfun(@(x) ~isempty(x) && x == frameNr, {obj.data(trialId).stimulus.frame});
             
-            if isempty(sel)
+            if isempty(sel) || isempty(obj.data(trialId).stimulus(sel))
+                disp('Warning: Unable to get samples for current frame, not contained in dataset.');
                 [samples, columns] = obj.getAnnotationsForInterval(trialId, 0, 0);
                 return
             end
-            
+                        
             [samples, columns] = obj.getAnnotationsForInterval(trialId, obj.data(trialId).stimulus(sel).onset, obj.data(trialId).stimulus(sel).offset);
         end
 
@@ -115,7 +116,7 @@ classdef VideoROIDataset < handle
             columns{end + 2} = 'Saccade mask';
             
             % Handle infinity (i.e. from beginning or until end)
-            if(isinf(first)), first = 1; end;
+            if(isinf(first)) || (first < 1), first = 1; end;
             if(isinf(last)), last = size(dta.samples, 1); end;
             
             intervalMask = first:last;
