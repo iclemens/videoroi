@@ -4,7 +4,11 @@ function VideoROIAnalysis(cfg)
     % FILL_DEFAULTS  Fills missing values in the configuration
     %  sturcture with their defaults.
         if(~isfield(cfg, 'projectDirectory'))
-            cfg.projectDirectory = 'C:\Users\Ivar\Desktop\Project3_All';
+            cfg.projectDirectory = uigetdir('', 'Open project directory');
+     
+            if(isempty(cfg.projectDirectory))
+                error('Please choose a valid project directory.');
+            end    
         end
         
         if(~isfield(cfg, 'outputFile'))            
@@ -176,6 +180,16 @@ function VideoROIAnalysis(cfg)
         fclose(outputFile);
     end
 
+    % Determine directory where m-file is located
+    path = fileparts(mfilename('fullpath'), '..');
+
+    % Add source directories to path
+    addpath(path);
+    addpath(fullfile(path, 'idf'));
+    addpath(fullfile(path, 'gui'));
+    addpath(fullfile(path, 'gui/controls'));
+    addpath(fullfile(path, 'videoroi'));
+    addpath(fullfile(path, 'mmread'));
 
     % Add default values to configuration structure
     if nargin < 1, cfg = struct; end;
