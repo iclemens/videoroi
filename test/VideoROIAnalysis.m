@@ -36,13 +36,14 @@ function VideoROIAnalysis(cfg)
     function perform_analysis_trial(cfg)
     % PERFORM_ANALYSIS_TRIAL  Peforms the analysis for a single trial only.
     
-        [samples, columns] = cfg.dataset.getAnnotationsForTrial(cfg.trial_index);
+        [samples, columns] = cfg.dataset.getAnnotationsForTrial(cfg.trial_index);        
+        % Note: Columns should be:
+        %  Time, PX, PY, Fixation Mask, Saccade Mask        
         
-        % Columns should be:
-        %  Time, PX, PY, Fixation Mask, Saccade Mask
-        % This script will first add:
-        %  Stim#, ROI#, Overlap
-        % Then clustering is performed
+        % We add more columns, set overlap to zero to indicate no overlap
+        samples(:, end + 1) = 0;   % Stimulus #
+        samples(:, end + 1) = 0;   % ROI number
+        samples(:, end + 1) = 0;   % Overlap              
         
         for s = 1:length(cfg.stimuli)
             % Get stimulus/frame information
@@ -51,6 +52,9 @@ function VideoROIAnalysis(cfg)
 
             frame = cfg.stimuli(s).frame;            
             if(frame == 0), continue; end;
+            
+            % Samples that belong to stimulus
+            sample_slc = cfg.stimuli(s).onset:cfg.stimuli(s).offset;
             
             % Load regions of interest
             region_filename = cfg.project.getLatestROIFilename(stimulus_info);
@@ -64,18 +68,32 @@ function VideoROIAnalysis(cfg)
             regions.loadRegionsFromFile(region_filename);
             
             % Get ROI data
-            [frameROIState, frameROIPosition, frameSceneChange] = regions.getFrameInfo(frame);
+            [roiState, roiPosition, sceneChange] = regions.getFrameInfo(frame);
             
+            % Assign ROIs to samples
+            for r = 1:length(roiState)
+                % Disabled, skip this region
+                if(~roiState(r)), continue; end;
+                
+                % Compute region corners
+                position = squeeze(roiPosition(r, :));                
+                xr = position(1) + [0 position(3)];
+                yr = position(2) + [0 position(4)];
+                
+                
+                xoverlap = min(samples(sample_slc, 2), xr(2)) - max(samples(sample_slc, 2), xr(1));
+                yoverlap = min(samples(sample_slc, 3), yr(2)) - max(samples(sample_slc, 3), yr(1));                
+                overlap = (xoverlap .* yoverlap);
+                
+                update = overlap > samples(sample_slc, 8);
+                samples(sample_slc(update), 6) = s;
+                samples(sample_slc(update), 7) = r;
+                samples(sample_slc(update), 8) = overlap(update);
+            end;
             
-            
-            %samples(:, 2) -> px
-            %samples(:, 3) -> py
-            % 4 -> fixation mask
-            % 5 -> saccade mask
-            % Add 
-            
-            
-        end;        
+            % Remove fixation mark when scene has just changed
+            % TODO
+        end;                
     end
 
 
