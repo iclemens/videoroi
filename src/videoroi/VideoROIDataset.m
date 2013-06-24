@@ -227,10 +227,24 @@ classdef VideoROIDataset < handle
         %%%%%%%%%%%%%%
         
         
-        function saccades = findSaccades(~, time, data, saccade_threshold, extension_angle_threshold)                        
+        function saccades = findSaccades(~, time, data, saccade_threshold, extension_angle_threshold)
+        % FIND_SACCADES  Detects saccades using a (velocity) threshold.
+        % It then tries to extend the saccade periods as long as
+        % the angle is similar and the speed is decreasing.
+        %
+        % It returns the found saccades as a matrix containing:
+        %  [start sample, stop sample]
+        %
+        
+            % No samples, means no saccades
+            if(isempty(data) || isempty(time))
+                saccades = zeros(0, 2);
+                return;
+            end
+        
             delta_t = diff(time);
             delta_s = diff(data);
-
+            
             dsdt = delta_s ./ delta_t(1);
             speed = sqrt(sum(dsdt .^ 2, 2));
 
@@ -324,25 +338,17 @@ classdef VideoROIDataset < handle
                 fixation_mask = ~saccade_mask;                
                 fixations = idf_cluster_mask(fixation_mask);
 
-                % Remove fixation which do not meet minimum duration
-                fixation_time = (time(2) - time(1)) * diff(fixations, [], 2);
-                fixations(fixation_time < minimum_fixation_duration, :) = [];
+                if(~isempty(time) && ~isempty(gaze))
+                    % Compute time between samples
+                    sample_time = time(2) - time(1);
+   
+                    % Remove fixation which do not meet minimum duration
+                    fixation_time = sample_time * diff(fixations, [], 2);
+                    fixations(fixation_time < minimum_fixation_duration, :) = [];
 
-                fixation_mask = idf_mask_cluster(fixations, length(time));
-                
-%                 if(t == 2)
-%                     cla; hold on;
-%                     plot(time-time(1), gaze(:, 1));
-%                     
-%                     masked_gaze = gaze(:, 1);
-%                     masked_gaze(~fixation_mask) = NaN;
-%                     plot(time-time(1), masked_gaze, 'r');
-%                     
-%                     masked_gaze = gaze(:, 1);
-%                     masked_gaze(~saccade_mask) = NaN;
-%                     plot(time-time(1), masked_gaze, 'g');
-%                 end
-                
+                    fixation_mask = idf_mask_cluster(fixations, length(time));
+                end;
+
                 obj.data(t).saccade_mask = saccade_mask;
                 obj.data(t).fixation_mask = fixation_mask;
             end

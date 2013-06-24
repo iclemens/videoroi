@@ -26,8 +26,14 @@ function [data, header] = idf_transform_data(cfg, data, header)
     end
     
     % Process all data using the callback
-    for i = 1:length(data)        
-        if isempty(data(i).samples), continue; end;
+    for i = 1:length(data)
+        % If there are no samples, at least extend matrix
+        % such that it has enough columns.
+        if isempty(data(i).samples)
+            sz = max(size(data(1).samples, 2), max(col_dest));
+            data(i).samples = zeros(0, sz);
+            continue;
+        end;
         
         source = data(i).samples(:, col_src);        
         dest = cfg.procfcn(cfg, source);        
