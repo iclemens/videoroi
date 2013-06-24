@@ -157,8 +157,9 @@ function VideoROIAnalysis(cfg)
         % Loop over datasets and trials
         for d = 1:numDatasets
             dataset_info = project.getInfoForDataset(d);
+            disp(['Processing ' num2str(d) ': ' dataset_info.name]);            
             dataset = VideoROIDataset(dataset_info, 'Task4Logic');
-            
+
             for t = 1:dataset.getNumberOfTrials();
                 stimuli = dataset.getStimuliForTrial(t);
 
