@@ -666,8 +666,10 @@ classdef VideoROIView < EventProvider
                     'MultiSelect', 'On');
                 
                 % No file selected, return
-                if(~iscell(filenames) && filenames == 0)
-                    return
+                if(~iscell(filenames))
+                    if(filenames == 0)
+                        return
+                    end
                 end;
                 
                 % If one file was selected, create a cell
