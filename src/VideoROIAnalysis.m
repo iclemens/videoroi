@@ -60,11 +60,11 @@ function VideoROIAnalysis(cfg)
                 duration = samples(s-1, 1) - samples(clusterStarted, 1);
                 
                 if(duration < 1000), continue; end;
-                
+                samples(s-1,4)
                 fprintf(cfg.outputFile, '"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
                     cfg.dataset_info.name, ...
                     cfg.stimuli( samples(s-1,3) ).name, ...
-                    '', ...
+                    cfg.regionLabels{ samples(s-1, 3) }{samples(s-1,4)}, ...
                     samples(s-1, 4), ...
                     samples(clusterStarted, 1), ...
                     samples(s-1, 1), ...
@@ -77,7 +77,7 @@ function VideoROIAnalysis(cfg)
     function perform_analysis_trial(cfg)
     % PERFORM_ANALYSIS_TRIAL  Peforms the analysis for a single trial only.
     
-        [samples, columns] = cfg.dataset.getAnnotationsForTrial(cfg.trial_index);        
+        [samples, columns] = cfg.dataset.getAnnotationsForTrial(cfg.trial_index);
         % Note: Columns should be:
         %  Time, PX, PY, Fixation Mask, Saccade Mask        
         
@@ -86,7 +86,9 @@ function VideoROIAnalysis(cfg)
         samples(:, end + 1) = 0;   % ROI number
         samples(:, end + 1) = 0;   % Overlap              
         
-        for s = 1:length(cfg.stimuli)
+        regionLabels = cell(1, length(cfg.stimuli));
+        
+        for s = 1:length(cfg.stimuli)                        
             % Get stimulus/frame information
             stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli(s).name);
             if(~isstruct(stimulus_info)), continue; end;
@@ -110,6 +112,7 @@ function VideoROIAnalysis(cfg)
             
             % Get ROI data
             [roiState, roiPosition, sceneChange] = regions.getFrameInfo(frame);
+            regionLabels{s} = cell(1, length(roiState));
             
             % Assign ROIs to samples
             for r = 1:length(roiState)
@@ -123,18 +126,21 @@ function VideoROIAnalysis(cfg)
                                 
                 xoverlap = min(samples(sample_slc, 2), xr(2)) - max(samples(sample_slc, 2), xr(1));
                 yoverlap = min(samples(sample_slc, 3), yr(2)) - max(samples(sample_slc, 3), yr(1));                
-                overlap = (xoverlap .* yoverlap);
+                overlap = (xoverlap .* yoverlap);                                
                 
                 update = overlap > samples(sample_slc, 8);
                 samples(sample_slc(update), 6) = s;
                 samples(sample_slc(update), 7) = r;
                 samples(sample_slc(update), 8) = overlap(update);
+                
+                regionLabels{s}{r} = regions.getLabelForRegion(r);
             end;
             
             % Remove fixation mark when scene has just changed
             % TODO
         end;
 
+        cfg.regionLabels = regionLabels;
         analysis_result_to_file(cfg, samples);
         
         % FIXME: We need some visualization here to verify that
