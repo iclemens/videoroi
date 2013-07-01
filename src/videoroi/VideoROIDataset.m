@@ -350,7 +350,6 @@ classdef VideoROIDataset < handle
                 obj.data(t).saccade_mask = saccade_mask;
                 obj.data(t).fixation_mask = fixation_mask;
             end
-        end
-        
+        end        
     end
 end

@@ -82,19 +82,19 @@ function DatasetGenerator(cfg)
 
                 switch scfg.trialNr
                     case 1
-                        x = scfg.frameDims(1) / 2;
-                        y = scfg.frameDims(2) / 2;
+                        x = scfg.screenDims(1) / 2;
+                        y = scfg.screenDims(2) / 2;
                     case 2
                         if mod(i, 100) < 50
-                            x = scfg.frameDims(1) * 0.25;
-                            y = scfg.frameDims(2) / 2;                            
+                            x = scfg.screenDims(1) * 0.25;
+                            y = scfg.screenDims(2) / 2;                            
                         else
-                            x = scfg.frameDims(1) * 0.75;
-                            y = scfg.frameDims(2) / 2;
+                            x = scfg.screenDims(1) * 0.75;
+                            y = scfg.screenDims(2) / 2;
                         end;
                     case 3
-                        x = scfg.frameDims(1) / 4;
-                        y = scfg.frameDims(2) / 2;                        
+                        x = scfg.screenDims(1) / 4;
+                        y = scfg.screenDims(2) / 2;                        
                 end
                 
                 fprintf(fid, '%d\tSMP\t%d\t0.0\t0.0\t0.0\t0.0\t0.0\t0.0\t%.2f\t%.2f\n', time, scfg.trial, x, y);
@@ -119,6 +119,7 @@ function DatasetGenerator(cfg)
             scfg.frameRate = stimulus.getFrameRate();
             scfg.frameCount = stimulus.getNumberOfFrames();            
             scfg.frameDims = [stimulus.getFrameWidth(), stimulus.getFrameHeight()];
+            scfg.screenDims = [1024 768];
             
             [~, name, ext] = fileparts(cfg.stimuli{i});
             scfg.filename = [name ext];            
