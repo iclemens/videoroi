@@ -26,9 +26,9 @@ function VideoROIAnalysis(cfg)
         for i_stimulus = 1:n_stimuli
             stimulus_info = project.getInfoForStimulus(i_stimulus);
             [~, sname, ~] = fileparts(stimulus_info.name);
-            [~, name, ~] = fileparts(name);                
+            [~, name, ~] = fileparts(name);
              
-            if strcmpi(sname, name)     
+            if strcmpi(sname, name)
                 return;
             end    
         end
@@ -88,7 +88,7 @@ function VideoROIAnalysis(cfg)
         
         regionLabels = cell(1, length(cfg.stimuli));
         
-        for s = 1:length(cfg.stimuli)                        
+        for s = 1:length(cfg.stimuli)
             % Get stimulus/frame information
             stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli(s).name);
             if(~isstruct(stimulus_info)), continue; end;
@@ -120,13 +120,13 @@ function VideoROIAnalysis(cfg)
                 if(~roiState(r)), continue; end;
                 
                 % Compute region corners
-                position = squeeze(roiPosition(r, :));                
+                position = squeeze(roiPosition(r, :));
                 xr = position(1) + [0 position(3)];
                 yr = position(2) + [0 position(4)];
                                 
                 xoverlap = min(samples(sample_slc, 2), xr(2)) - max(samples(sample_slc, 2), xr(1));
-                yoverlap = min(samples(sample_slc, 3), yr(2)) - max(samples(sample_slc, 3), yr(1));                
-                overlap = (xoverlap .* yoverlap);                                
+                yoverlap = min(samples(sample_slc, 3), yr(2)) - max(samples(sample_slc, 3), yr(1));
+                overlap = (xoverlap .* yoverlap);
                 
                 update = overlap > samples(sample_slc, 8);
                 samples(sample_slc(update), 6) = s;
@@ -156,14 +156,14 @@ function VideoROIAnalysis(cfg)
         
         % Open output file and write header
         outputFile = fopen(cfg.outputFile, 'w');        
-        fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "t_fix_start", "t_fix_stop", "fix_duration"\r\n');       
+        fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "t_fix_start", "t_fix_stop", "fix_duration"\r\n');
                         
         numDatasets = project.getNumberOfDatasets();        
         
         % Loop over datasets and trials
         for d = 1:numDatasets
             dataset_info = project.getInfoForDataset(d);
-            disp(['Processing ' num2str(d) ': ' dataset_info.name]);            
+            disp(['Processing ' num2str(d) ': ' dataset_info.name]);
             dataset = VideoROIDataset(dataset_info, 'Task4Logic');
 
             for t = 1:dataset.getNumberOfTrials();
@@ -178,7 +178,7 @@ function VideoROIAnalysis(cfg)
                 cfg.dataset = dataset;
                 cfg.stimuli = stimuli;
                 
-                perform_analysis_trial(cfg)
+                perform_analysis_trial(cfg);
             end
         end
         
@@ -188,7 +188,7 @@ function VideoROIAnalysis(cfg)
 
     % Determine directory where m-file is located
     path = fileparts(mfilename('fullpath'));
-    path = fullfile(path, '..', 'src');    
+    path = fullfile(path, '..', 'src');
 
     % Add source directories to path
     addpath(path);
