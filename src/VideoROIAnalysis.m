@@ -30,7 +30,7 @@ function VideoROIAnalysis(cfg)
              
             if strcmpi(sname, name)
                 return;
-            end    
+            end
         end
     
         stimulus_info = 0;
@@ -46,28 +46,48 @@ function VideoROIAnalysis(cfg)
         samples = samples(:, [1 4 6 7]);
         
         for s = 1:size(samples, 1)
-            if(~clusterRunning && samples(s, 2) && samples(s, 4) > 0)
+            % Fixation cluster started
+            if(~clusterRunning && samples(s, 2))
                 clusterRunning = true;
                 clusterStarted = s;
+                regionStarted = s;
             end
-
-            if(clusterRunning && ( ...
-                ~samples(s, 2) || ...                              % Fixation ended
-                samples(s, 4) ~= samples(clusterStarted, 4)))      % Different ROI
-
-                clusterRunning = false;
-
-                duration = samples(s-1, 1) - samples(clusterStarted, 1);
+           
+            % Region of interest has changed
+            if(clusterRunning && s > 1 && samples(s - 1, 3) > 0 && ...
+                    ((samples(s, 4) ~= samples(regionStarted, 4)) || ...
+                    ~(samples(s, 2))) ...
+                )
+                duration = samples(s-1, 1) - samples(regionStarted, 1);
+                
+                if(samples(s-1, 4) == 0)
+                    regionLabel = 'OutsideRegions';
+                else
+                    regionLabel = cfg.regionLabels{ samples(s - 1, 3) }{samples(s - 1, 4)};
+                end
 
                 fprintf(cfg.outputFile, '"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
                     cfg.dataset_info.name, ...
                     cfg.stimuli( samples(s-1,3) ).name, ...
-                    cfg.regionLabels{ samples(s-1, 3) }{samples(s-1,4)}, ...
+                    regionLabel, ...
                     samples(s-1, 4), ...
-                    samples(clusterStarted, 1), ...
+                    samples(regionStarted, 1), ...
                     samples(s-1, 1), ...
-                    duration);            
+                    duration);
+                
+                regionStarted = s;
             end
+            
+            % Fixation stopped
+            if(clusterRunning && ~samples(s, 2))
+                clusterRunning = false;
+                duration = samples(s-1, 1) - samples(clusterStarted, 1);
+                
+                % check fixation duration...
+                if(duration / 1000 / 1000 < cfg.minimum_fixation_duration)
+                    disp('Warning: should discard this fixation!');
+                end
+            end;            
         end
     end
 
@@ -117,6 +137,9 @@ function VideoROIAnalysis(cfg)
             
             regionLabels{s} = cell(1, length(roiState));            
             
+            % Add stimulus number to samples
+            samples(sample_slc, 6) = s;
+            
             % Assign ROIs to samples
             for r = 1:length(roiState)
                 % Disabled, skip this region
@@ -132,7 +155,6 @@ function VideoROIAnalysis(cfg)
                 in_region = (x_in_region .* y_in_region);
                 
                 update = in_region > samples(sample_slc, 8);
-                samples(sample_slc(update), 6) = s;
                 samples(sample_slc(update), 7) = r;
                 samples(sample_slc(update), 8) = in_region(update);
                 
@@ -147,12 +169,8 @@ function VideoROIAnalysis(cfg)
         end;
 
         % Clear fixation mask on marked samples
-        samples(:, 9)
-        samples(samples(:, 9) == 1, [4 6:8]) = 0;
-        
-        % FIXME: Take minimum fixation duration into account.
-        %cfg.minimum_fixation_duration = 0.1;
-        
+        samples(samples(:, 9) == 1, [4 7:8]) = 0;
+                
         cfg.regionLabels = regionLabels;
         analysis_result_to_file(cfg, samples);
         
