@@ -827,6 +827,5 @@ classdef VideoROIView < EventProvider
             obj.unsavedFlag = 1;
         end        
         
-    end        
-    
+    end   
 end
