@@ -51,6 +51,8 @@ function VideoROIAnalysis(cfg)
                 clusterRunning = true;
                 clusterStarted = s;
                 regionStarted = s;
+                
+                buffer = {};
             end
            
             % Region of interest has changed
@@ -66,7 +68,7 @@ function VideoROIAnalysis(cfg)
                     regionLabel = cfg.regionLabels{ samples(s - 1, 3) }{samples(s - 1, 4)};
                 end
 
-                fprintf(cfg.outputFile, '"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
+                buffer{end + 1} = sprintf('"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
                     cfg.dataset_info.name, ...
                     cfg.stimuli( samples(s-1,3) ).name, ...
                     regionLabel, ...
@@ -83,11 +85,14 @@ function VideoROIAnalysis(cfg)
                 clusterRunning = false;
                 duration = samples(s-1, 1) - samples(clusterStarted, 1);
                 
-                % check fixation duration...
-                if(duration / 1000 / 1000 < cfg.minimum_fixation_duration)
-                    disp('Warning: should discard this fixation!');
-                end
-            end;            
+                % Only except fixation that last > minimum
+                if(duration / 1000 / 1000 >= cfg.minimum_fixation_duration)
+                    for b = 1:length(buffer)
+                        fprintf(cfg.outputFile, buffer{b});
+                    end
+                    buffer = {};
+                end;                                
+            end;    
         end
     end
 
