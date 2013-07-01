@@ -80,7 +80,7 @@ function VideoROIAnalysis(cfg)
         [samples, columns] = cfg.dataset.getAnnotationsForTrial(cfg.trial_index);
         % Note: Columns should be:
         %  Time, PX, PY, Fixation Mask, Saccade Mask        
-        
+               
         % We add more columns, set overlap to zero to indicate no overlap
         samples(:, end + 1) = 0;   % Stimulus #
         samples(:, end + 1) = 0;   % ROI number
@@ -111,8 +111,11 @@ function VideoROIAnalysis(cfg)
             regions.loadRegionsFromFile(region_filename);
             
             % Get ROI data
-            [roiState, roiPosition, sceneChange] = regions.getFrameInfo(frame);
-            regionLabels{s} = cell(1, length(roiState));
+            [roiState, roiPosition, sceneChange] = regions.getFrameInfo(frame);            
+            roiPosition(:, :, [1 3]) = roiPosition(:, :, [1 3]) ./ 640 .* 1024;
+            roiPosition(:, :, [2 4]) = roiPosition(:, :, [2 4]) ./ 640 .* 1024;
+            
+            regionLabels{s} = cell(1, length(roiState));            
             
             % Assign ROIs to samples
             for r = 1:length(roiState)
@@ -123,15 +126,15 @@ function VideoROIAnalysis(cfg)
                 position = squeeze(roiPosition(r, :));
                 xr = position(1) + [0 position(3)];
                 yr = position(2) + [0 position(4)];
-                                
-                xoverlap = min(samples(sample_slc, 2), xr(2)) - max(samples(sample_slc, 2), xr(1));
-                yoverlap = min(samples(sample_slc, 3), yr(2)) - max(samples(sample_slc, 3), yr(1));
-                overlap = (xoverlap .* yoverlap);
                 
-                update = overlap > samples(sample_slc, 8);
+                x_in_region = (samples(sample_slc, 2) > xr(1)) .* (samples(sample_slc, 2) < xr(2));
+                y_in_region = (samples(sample_slc, 3) > yr(1)) .* (samples(sample_slc, 3) < yr(2));
+                in_region = (x_in_region .* y_in_region);
+                
+                update = in_region > samples(sample_slc, 8);
                 samples(sample_slc(update), 6) = s;
                 samples(sample_slc(update), 7) = r;
-                samples(sample_slc(update), 8) = overlap(update);
+                samples(sample_slc(update), 8) = in_region(update);
                 
                 regionLabels{s}{r} = regions.getLabelForRegion(r);
             end;
