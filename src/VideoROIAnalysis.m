@@ -50,15 +50,15 @@ function VideoROIAnalysis(cfg)
                 clusterRunning = true;
                 clusterStarted = s;
             end
-            
+
             if(clusterRunning && ( ...
                 ~samples(s, 2) || ...                              % Fixation ended
                 samples(s, 4) ~= samples(clusterStarted, 4)))      % Different ROI
-            
-                clusterRunning = false;                                
+
+                clusterRunning = false;
 
                 duration = samples(s-1, 1) - samples(clusterStarted, 1);
-                
+
                 fprintf(cfg.outputFile, '"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
                     cfg.dataset_info.name, ...
                     cfg.stimuli( samples(s-1,3) ).name, ...
