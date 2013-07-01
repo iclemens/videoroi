@@ -59,8 +59,6 @@ function VideoROIAnalysis(cfg)
 
                 duration = samples(s-1, 1) - samples(clusterStarted, 1);
                 
-                if(duration < 1000), continue; end;
-
                 fprintf(cfg.outputFile, '"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
                     cfg.dataset_info.name, ...
                     cfg.stimuli( samples(s-1,3) ).name, ...
@@ -85,6 +83,8 @@ function VideoROIAnalysis(cfg)
         samples(:, end + 1) = 0;   % Stimulus #
         samples(:, end + 1) = 0;   % ROI number
         samples(:, end + 1) = 0;   % Overlap              
+        samples(:, end + 1) = 0;   % Ignore flag
+        
         
         regionLabels = cell(1, length(cfg.stimuli));
         
@@ -138,11 +138,21 @@ function VideoROIAnalysis(cfg)
                 
                 regionLabels{s}{r} = regions.getLabelForRegion(r);
             end;
-            
-            % Remove fixation mark when scene has just changed
-            % TODO
+
+            % Mark samples to be ignored
+            if(sceneChange)                
+                t = (samples(:, 1) - samples(sample_slc(1), 1)) / 1000 / 1000;                
+                samples(t >= 0 & t <= cfg.ignore_after_scene_change, 9) = 1;
+            end
         end;
 
+        % Clear fixation mask on marked samples
+        samples(:, 9)
+        samples(samples(:, 9) == 1, [4 6:8]) = 0;
+        
+        % FIXME: Take minimum fixation duration into account.
+        %cfg.minimum_fixation_duration = 0.1;
+        
         cfg.regionLabels = regionLabels;
         analysis_result_to_file(cfg, samples);
         
@@ -180,6 +190,9 @@ function VideoROIAnalysis(cfg)
                 
                 cfg.dataset = dataset;
                 cfg.stimuli = stimuli;
+                
+                cfg.ignore_after_scene_change = 0.1;   
+                cfg.minimum_fixation_duration = 0.1;
                 
                 perform_analysis_trial(cfg);
             end
