@@ -99,7 +99,7 @@ classdef VideoROIStimulus < handle
         
         % Query frame rate
         function frameRate = getFrameRate(obj)
-            if(strcmp(obj.type, 'video') && obj.videoReader)
+            if(strcmp(obj.type, 'video') && isobject(obj.videoReader))
                 frameRate = obj.videoReader.FrameRate;
             else
                 frameRate = 30;
