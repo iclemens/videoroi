@@ -1,7 +1,7 @@
 function DatasetGenerator(cfg)
 
     function write_header(cfg)
-        fid = cfg.outputFile;
+        fid = cfg.datasetFile;
         
         if(~isfield(cfg, 'columns'))
             cfg.columns = {'Time', 'Type', 'Trial', ...
@@ -39,25 +39,62 @@ function DatasetGenerator(cfg)
         fprintf(fid, '%s\n', strjoin(cfg.columns, '\t'));
     end
 
+    function time = generate_samples(scfg)
+        time = scfg.startTime;
+        fid = scfg.datasetFile;
+        
+        timePerSample = 1000000/500;
+        timePerFrame = 1000000/30;
+        
+        samplesPerFrame = ceil(timePerFrame / timePerSample);
+        
+        fprintf(fid, '%d\tMSG\t%d\t# Message: TrialNr: %d\n', time, scfg.trial - 1, scfg.trialNr);
+        fprintf(fid, '%d\tMSG\t%d\t# Message: TrialNr: %d\n', time, scfg.trial, scfg.trialNr);
+        fprintf(fid, '%d\tMSG\t%d\t# Message: Movie: %s\n', time, scfg.trial, scfg.filename);
+        
+        for i = 1:scfg.frameCount
+            
+            fprintf(fid, '%d\tMSG\t%d\t# Message: FrameNr: %d\n', time, scfg.trial, i);
+            fprintf(fid, '%d\tMSG\t%d\t# Message: Frame: %d\n', time, scfg.trial, i);
+            
+            for j = 1:samplesPerFrame
+                time = time + 2000;
 
-%7441672318	SMP	22	97.19	84.50	26.00	27.00	111.63	87.68	479.07	404.54
-%7441674342	SMP	22	97.17	84.56	24.00	28.00	111.66	87.70	478.75	404.69
-%7441676335	SMP	22	97.20	84.51	25.00	27.00	111.63	87.70	479.14	404.35        
-
-
-    function main(cfg)
-        cfg.outputFile = fopen(cfg.outputFilename, 'w');
-        
-        cfg.sampleCount = 10000;
-        
-        write_header(cfg);
-        
-                
-        
-        fclose(cfg.outputFile);
+                x = 0; y = 0;
+                fprintf(fid, '%d\tSMP\t%d\t0.0\t0.0\t0.0\t0.0\t0.0\t0.0\t%.2f\t%.2f\n', time, scfg.trial, x, y);
+            end
+        end
     end
 
+    function main(cfg)
+        cfg.datasetFile = fopen(cfg.datasetFilename, 'w');
+        
+        cfg.startTime = 0;
+        time = cfg.startTime;
+
+        write_header(cfg);
+        
+        for i = 1:length(cfg.stimuli)
+            stimulus = VideoROIStimulus();
+            stimulus.openStimulus(cfg.stimuli{i});
+            
+            scfg = struct();
+            scfg.frameRate = stimulus.getFrameRate();
+            scfg.frameCount = stimulus.getNumberOfFrames();            
+            scfg.frameDims = [stimulus.getFrameWidth(), stimulus.getFrameHeight()];
+            
+            [~, name, ext] = fileparts(cfg.stimuli{i});
+            scfg.filename = [name ext];            
+            scfg.startTime = time;
+            scfg.trial = i + 20;
+            scfg.trialNr = i;
+            scfg.datasetFile = cfg.datasetFile;
+            
+            time = generate_samples(scfg);            
+        end                       
+
+        fclose(cfg.datasetFile);
+    end
 
     main(cfg);
-
 end
