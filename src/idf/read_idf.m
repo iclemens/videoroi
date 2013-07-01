@@ -23,11 +23,11 @@ function [samples, messages, header] = read_idf(filename)
     header = struct();
     blockName = '';  
     
-    while(strcmp(line(1:2), '##'))        
+    while(length(line) < 2 || strcmp(line(1:2), '##'))              
         line = strtrim(line(3:end));
         
         if isempty(line)
-            line = fgetl(fid);
+            line = fgetl(fid);            
             continue; 
         end;       
         
@@ -47,6 +47,7 @@ function [samples, messages, header] = read_idf(filename)
         
         line = fgetl(fid);
     end
+   
     
     % %%%%%%%%%%%%%%%%%%%
     % Read sample-header
