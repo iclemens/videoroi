@@ -293,9 +293,12 @@ classdef VideoROI < handle
             % Annotate image            
             if(~isempty(obj.dataset))
                 ppd = obj.dataset.pixelsPerDegree();
-                
+                                
                 if(obj.currentStimulusTrial == -1)
-                    obj.currentStimulusTrial = obj.dataset.getTrialsWithStimulus(obj.currentStimulus);
+                    obj.currentStimulusTrial = obj.dataset.getTrialsWithStimulus(obj.currentStimulus);                                        
+                    if(isempty(obj.currentStimulusTrial))
+                        obj.currentStimulusTrial = -1;
+                    end;
                 end
 
                 samples = obj.dataset.getAnnotationsForFrame(obj.currentStimulusTrial, obj.frameIndex);
@@ -311,8 +314,10 @@ classdef VideoROI < handle
                 for s = 1:size(samples, 1)
                     if(samples(s, 4))
                         for j = -ceil(ppd/2):floor(ppd/2)
-                            I(min(640, max(1, samples(s, 3) + j)), samples(s, 2), 2) = 255;
-                            I(samples(s, 3), min(640, max(1, samples(s, 2) + j)), 2) = 255;
+                            I(min(640, max(1, samples(s, 3) + j)), ...
+                              samples(s, 2), 2) = 255;
+                            I(samples(s, 3), ...
+                              min(640, max(1, samples(s, 2) + j)), 2) = 255;
                         end
                     end
                     
