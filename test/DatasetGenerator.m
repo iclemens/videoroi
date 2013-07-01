@@ -1,6 +1,8 @@
 function DatasetGenerator(cfg)
 
     function write_header(cfg)
+    % WRITE_HEADER  Writes the file header.
+    
         fid = cfg.datasetFile;
         
         if(~isfield(cfg, 'columns'))
@@ -37,9 +39,26 @@ function DatasetGenerator(cfg)
         fprintf(fid, '\n');
         
         fprintf(fid, '%s\n', strjoin(cfg.columns, '\t'));
-    end
+    end  
 
     function time = generate_samples(scfg)
+    % GENERATE_SAMPLES  Writes all samples for a given trial 
+    % to the datafile.
+    %
+    % Trials:
+    %  1. Constant fixation for entire duration
+    %     - ROI: Every 10th frame is a new scene
+    %     - One big ROI for full frame
+    %
+    %  2. Fixation jumps from left to right half of screen every 100 frames.
+    %     - ROI: Full frame
+    %
+    %  3. Other frames, the fixation is constantly on the left.
+    %     - ROI jumps A left, B right; 
+    %                 A right, B left; 
+    %                 A disabled, B disabled every 100 frames.
+    %  
+
         time = scfg.startTime;
         fid = scfg.datasetFile;
         
@@ -59,12 +78,30 @@ function DatasetGenerator(cfg)
             
             for j = 1:samplesPerFrame
                 time = time + 2000;
-
                 x = 0; y = 0;
+
+                switch scfg.trialNr
+                    case 1
+                        x = scfg.frameDims(1) / 2;
+                        y = scfg.frameDims(2) / 2;
+                    case 2
+                        if mod(i, 100) < 50
+                            x = scfg.frameDims(1) * 0.25;
+                            y = scfg.frameDims(2) / 2;                            
+                        else
+                            x = scfg.frameDims(1) * 0.75;
+                            y = scfg.frameDims(2) / 2;
+                        end;
+                    case 3
+                        x = scfg.frameDims(1) / 4;
+                        y = scfg.frameDims(2) / 2;                        
+                end
+                
                 fprintf(fid, '%d\tSMP\t%d\t0.0\t0.0\t0.0\t0.0\t0.0\t0.0\t%.2f\t%.2f\n', time, scfg.trial, x, y);
             end
         end
     end
+
 
     function main(cfg)
         cfg.datasetFile = fopen(cfg.datasetFilename, 'w');
