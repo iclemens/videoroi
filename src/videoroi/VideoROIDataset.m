@@ -70,10 +70,8 @@ classdef VideoROIDataset < handle
             end
             
             for t = 1:length(obj.data)
-                for s = 1:length(obj.data(t).stimulus)
-                    
+                for s = 1:length(obj.data(t).stimulus)                    
                     [~, name, ~] = fileparts(obj.data(t).stimulus(s).name);
-                    
                     if strcmpi(name, stimulusName)
                         list(end + 1) = t;
                         break;

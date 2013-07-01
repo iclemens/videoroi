@@ -43,7 +43,7 @@ for t = 1:length(data)
         % Parse movie string
         if strncmpi(msg.message, '# Message: Movie: ', 18)
             data(t).movie = strtrim(msg.message(19:end));
-        end                            
+        end
     end
     
     if(data(t).movie == -1)
