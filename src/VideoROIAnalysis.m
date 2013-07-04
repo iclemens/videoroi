@@ -107,7 +107,7 @@ function VideoROIAnalysis(cfg)
             end
             
             % Fixation stopped
-            if(clusterRunning && ~samples(s, 2))
+            if(clusterRunning && (~samples(s, 2) || s == size(samples, 1)))
                 clusterRunning = false;
                 
                 if(s < size(samples, 1))        
