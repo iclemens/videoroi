@@ -257,13 +257,20 @@ classdef VideoROIDataset < handle
             %  speed is decreasing.
             for c = 1:size(saccades, 1)                
                 running = 1;
+
                 while(running && saccades(c, 1) > 1)
                     previous = dsdt(saccades(c, 1) - 1, :);
                     current = dsdt(saccades(c, 1), :);
-                
-                    angle = atan2(previous(2), previous(1)) - atan2(current(2), current(1));
+
+                    prevAngle = atan2(previous(2), previous(1));
+                    currAngle = atan2(current(2), current(1));
+                    
+                    if(previous(2) == 0 && previous(1) == 0), prevAngle = Inf; end;
+                    if(current(2) == 0 && current(1) == 0), currAngle = Inf; end;
+                    
+                    angle = prevAngle - currAngle;
                     angle = mod(angle + pi, 2 * pi) - pi;
-                
+                                    
                     angle_crit = abs(angle) < extension_angle_threshold;
                     speed_crit = speed(saccades(c, 1) - 1) < speed(saccades(c, 1));
                 
@@ -279,7 +286,13 @@ classdef VideoROIDataset < handle
                     current = dsdt(saccades(c, 2) - 1, :);
                     next = dsdt(saccades(c, 2), :);
                     
-                    angle = atan2(next(2), next(1)) - atan2(current(2), current(1));
+                    currAngle = atan2(current(2), current(1));
+                    nextAngle = atan2(next(2), next(1));
+
+                    if(current(2) == current(2)), currAngle = Inf; end;
+                    if(next(2) == next(1)), nextAngle = Inf; end;
+                    
+                    angle = nextAngle - currAngle;
                     angle = mod(angle + pi, 2 * pi) - pi;
                 
                     angle_crit = abs(angle) < extension_angle_threshold;
