@@ -60,7 +60,6 @@ function VideoROIAnalysis(cfg)
                     ((samples(s, 4) ~= samples(regionStarted, 4)) || ...
                     ~(samples(s, 2))) ...
                 )
-                duration = samples(s-1, 1) - samples(regionStarted, 1);
                 
                 if(samples(s-1, 4) == 0)
                     regionLabel = 'OutsideRegions';
@@ -68,13 +67,28 @@ function VideoROIAnalysis(cfg)
                     regionLabel = cfg.regionLabels{ samples(s - 1, 3) }{samples(s - 1, 4)};
                 end
 
+                %
+                % The start time of a fixation is in the middle of the
+                % first sample of the fixation and the one before it.
+                %
+                % For example:
+                %  Sample time in ms:  2   4   6   8
+                %  Fixation flag:      -   -   F   F
+                %
+                % In this case the fixation starts at time 5.
+                % A similar trick is applied to the stop-times.
+                %
+                startTime = mean(samples(regionStarted - [0 1], 1));
+                stopTime = mean(samples(s - [0 1], 1));
+                duration = stopTime - starttime;
+                
                 buffer{end + 1} = sprintf('"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
                     cfg.dataset_info.name, ...
                     cfg.stimuli( samples(s-1,3) ).name, ...
                     regionLabel, ...
                     samples(s-1, 4), ...
-                    samples(regionStarted, 1), ...
-                    samples(s-1, 1), ...
+                    startTime, ...
+                    stopTime, ...
                     duration);
                 
                 regionStarted = s;
