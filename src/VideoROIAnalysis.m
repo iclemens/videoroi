@@ -92,7 +92,7 @@ function VideoROIAnalysis(cfg)
                     stopTime = samples(s, 1);
                 end;
                 
-                duration = stopTime - starttime;
+                duration = stopTime - startTime;
                 
                 buffer{end + 1} = sprintf('"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
                     cfg.dataset_info.name, ...
@@ -122,7 +122,7 @@ function VideoROIAnalysis(cfg)
                     startTime = samples(clusterStarted, 1);
                 end
                 
-                duration = samples(s-1, 1) - samples(clusterStarted, 1);
+                duration = stopTime - startTime;
                 
                 % Only except fixation that last > minimum
                 if(duration / 1000 / 1000 >= cfg.minimum_fixation_duration)
