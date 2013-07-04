@@ -42,8 +42,9 @@ function VideoROIAnalysis(cfg)
         clusterRunning = false;
         clusterStarted = 1;
         
-        % Only keep time, fixation mask, stimulus and roi number
-        samples = samples(:, [1 4 6 7]);
+        % Only keep time, fixation mask, stimulus, 
+        % roi number and frame number
+        samples = samples(:, [1 4 6 7 10]);
         
         for s = 1:size(samples, 1)
             % Fixation cluster started
@@ -94,12 +95,17 @@ function VideoROIAnalysis(cfg)
                 
                 duration = stopTime - startTime;
                 
-                buffer{end + 1} = sprintf('"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
+                startFrame = samples(regionStarted, 5);
+                stopFrame = samples(s, 5);
+                
+                buffer{end + 1} = sprintf('"%s", "%s", "%s", %d, %d, %d, %d, %d, %d\r\n', ...
                     cfg.dataset_info.name, ...
                     cfg.stimuli( samples(s-1,3) ).name, ...
                     regionLabel, ...
                     samples(s-1, 4), ...
+                    startFrame, ...
                     startTime, ...
+                    stopFrame, ...
                     stopTime, ...
                     duration);
                 
@@ -148,6 +154,7 @@ function VideoROIAnalysis(cfg)
         samples(:, end + 1) = 0;   % ROI number
         samples(:, end + 1) = 0;   % Overlap              
         samples(:, end + 1) = 0;   % Ignore flag
+        samples(:, end + 1) = 0;   % Frame number
         
         
         regionLabels = cell(1, length(cfg.stimuli));
@@ -183,6 +190,7 @@ function VideoROIAnalysis(cfg)
             
             % Add stimulus number to samples
             samples(sample_slc, 6) = s;
+            samples(sample_slc, 10) = cfg.stimuli(s).frame;
             
             % Assign ROIs to samples
             for r = 1:length(roiState)
@@ -231,7 +239,7 @@ function VideoROIAnalysis(cfg)
         
         % Open output file and write header
         outputFile = fopen(cfg.outputFile, 'w');        
-        fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "t_fix_start", "t_fix_stop", "fix_duration"\r\n');
+        fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "f_fix_start", "t_fix_start", "f_fix_stop", "t_fix_stop", "fix_duration"\r\n');
                         
         numDatasets = project.getNumberOfDatasets();        
         
