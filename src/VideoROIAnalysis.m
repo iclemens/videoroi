@@ -214,7 +214,7 @@ function VideoROIAnalysis(cfg)
                 cfg.dataset = dataset;
                 cfg.stimuli = stimuli;
                 
-                cfg.ignore_after_scene_change = 0.1;   
+                cfg.ignore_after_scene_change = 0.15;   
                 cfg.minimum_fixation_duration = 0.1;
                 
                 perform_analysis_trial(cfg);
