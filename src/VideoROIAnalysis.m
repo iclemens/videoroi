@@ -202,13 +202,22 @@ function VideoROIAnalysis(cfg)
                 xr = position(1) + [0 position(3)];
                 yr = position(2) + [0 position(4)];
                 
-                x_in_region = (samples(sample_slc, 2) > xr(1)) .* (samples(sample_slc, 2) < xr(2));
-                y_in_region = (samples(sample_slc, 3) > yr(1)) .* (samples(sample_slc, 3) < yr(2));
-                in_region = (x_in_region .* y_in_region);
+                % Compute fixation corners
+                pixels_per_degree = 22;
+                box_size = 1 * pixels_per_degree;   % in Pixels
+                xs = [samples(sample_slc, 2) + box_size samples(sample_slc, 2) - box_size];
+                ys = [samples(sample_slc, 3) + box_size samples(sample_slc, 3) - box_size];
+                                
+                % Compute overlap between fixation box and region box                
+                xoverlap = min(xs(:, 2), xr(2)) - max(xs(:, 1), xr(1));
+                yoverlap = min(ys(:, 2), yr(2)) - max(ys(:, 1), yr(1));                
+                overlap = (xoverlap .* yoverlap);
                 
-                update = in_region > samples(sample_slc, 8);
+                % Only update if this region has larger overlap than
+                %  possible previous match.
+                update = overlap > samples(sample_slc, 8);                
                 samples(sample_slc(update), 7) = r;
-                samples(sample_slc(update), 8) = in_region(update);
+                samples(sample_slc(update), 8) = overlap(update);
                 
                 regionLabels{s}{r} = regions.getLabelForRegion(r);
             end;
