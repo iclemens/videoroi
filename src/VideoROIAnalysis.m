@@ -167,9 +167,9 @@ function VideoROIAnalysis(cfg)
             end;
 
             % Mark samples to be ignored
-            if(sceneChange)                
+            if(sceneChange)
                 t = (samples(:, 1) - samples(sample_slc(1), 1)) / 1000 / 1000;                
-                samples(t >= 0 & t <= cfg.ignore_after_scene_change, 9) = 1;
+                samples(t >= 0 & t < cfg.ignore_after_scene_change, 9) = 1;
             end
         end;
 
