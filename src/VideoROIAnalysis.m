@@ -57,9 +57,11 @@ function VideoROIAnalysis(cfg)
            
             % Region of interest has changed
             if(clusterRunning && s > 1 && samples(s - 1, 3) > 0 && ...
-                    ((samples(s, 4) ~= samples(regionStarted, 4)) || ...
-                    ~(samples(s, 2))) ...
-                )
+                    ( ...                        
+                        (samples(s, 4) ~= samples(regionStarted, 4)) || ... % Region has changed
+                        ~(samples(s, 2)) || ...     % Not fixating anymore
+                        s == size(samples, 1) ...   % Last sample
+                    ))
                 
                 if(samples(s-1, 4) == 0)
                     regionLabel = 'OutsideRegions';
@@ -78,8 +80,18 @@ function VideoROIAnalysis(cfg)
                 % In this case the fixation starts at time 5.
                 % A similar trick is applied to the stop-times.
                 %
-                startTime = mean(samples(regionStarted - [0 1], 1));
-                stopTime = mean(samples(s - [0 1], 1));
+                if(regionStarted > 1)
+                    startTime = mean(samples(regionStarted - [0 1], 1));
+                else
+                    startTime = samples(regionStarted, 1);
+                end;
+                
+                if(s < size(samples, 1))
+                    stopTime = mean(samples(s - [0 1], 1));
+                else
+                    stopTime = samples(s, 1);
+                end;
+                
                 duration = stopTime - starttime;
                 
                 buffer{end + 1} = sprintf('"%s", "%s", "%s", %d, %d, %d, %d\r\n', ...
@@ -97,6 +109,19 @@ function VideoROIAnalysis(cfg)
             % Fixation stopped
             if(clusterRunning && ~samples(s, 2))
                 clusterRunning = false;
+                
+                if(s < size(samples, 1))        
+                    stopTime = mean(samples(s - [0 1], 1));
+                else
+                    stopTime = mean(samples(s, 1));
+                end
+                
+                if(clusterStarted > 1)
+                    startTime = mean(samples(clusterStarted - [1 0], 1));
+                else
+                    startTime = samples(clusterStarted, 1);
+                end
+                
                 duration = samples(s-1, 1) - samples(clusterStarted, 1);
                 
                 % Only except fixation that last > minimum
