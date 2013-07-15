@@ -247,7 +247,12 @@ function VideoROIAnalysis(cfg)
         project = VideoROIProject(cfg.projectDirectory);
         
         % Open output file and write header
-        outputFile = fopen(cfg.outputFile, 'w');        
+        [outputFile, message] = fopen(cfg.outputFile, 'w');
+        
+        if(outputFile == -1)
+            error(['Could not open output file: ' message]);
+        end
+        
         fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "f_fix_start", "t_fix_start", "f_fix_stop", "t_fix_stop", "fix_duration"\r\n');
                         
         numDatasets = project.getNumberOfDatasets();        
