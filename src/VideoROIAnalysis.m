@@ -11,6 +11,10 @@ function VideoROIAnalysis(cfg)
             end    
         end
         
+        if(~isfield(cfg, 'units'))
+            cfg.units = 'us';
+        end
+        
         if(~isfield(cfg, 'outputFile'))            
             cfg.outputFile = fullfile(cfg.projectDirectory, 'output.csv');
         end
@@ -39,6 +43,17 @@ function VideoROIAnalysis(cfg)
 
     function analysis_result_to_file(cfg, samples)
     % ANALYSIS_RESULT_TO_FILE  Writes the results of the analysis to file.
+    
+        % Select function to use for unit conversion
+        func = @(x) x;
+        if(strcmp(cfg.units, 'us'))
+            func = @(x) round(x);
+        elseif(strcmp(cfg.units, 'ms'))
+            func = @(x) round(x / 1000.0);
+        elseif(strcmp(cfg.units, 's'))
+            func = @(x) round(x / 1000.0) / 1000.0;
+        end
+      
         clusterRunning = false;
         clusterStarted = 1;
         
@@ -104,10 +119,10 @@ function VideoROIAnalysis(cfg)
                     regionLabel, ...
                     samples(s-1, 4), ...
                     startFrame, ...
-                    startTime, ...
+                    func(startTime), ...
                     stopFrame, ...
-                    stopTime, ...
-                    duration);
+                    func(stopTime), ...
+                    func(duration));
                 
                 regionStarted = s;
             end
@@ -255,7 +270,8 @@ function VideoROIAnalysis(cfg)
         
         fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "f_fix_start", "t_fix_start", "f_fix_stop", "t_fix_stop", "fix_duration"\r\n');
                         
-        numDatasets = project.getNumberOfDatasets();        
+        numDatasets = project.getNumberOfDatasets();
+        units = cfg.units;
         
         % Loop over datasets and trials
         for d = 1:numDatasets
@@ -274,6 +290,8 @@ function VideoROIAnalysis(cfg)
                 
                 cfg.dataset = dataset;
                 cfg.stimuli = stimuli;
+                
+                cfg.units = units;
                 
                 cfg.ignore_after_scene_change = 0.15;   
                 cfg.minimum_fixation_duration = 0.1;
