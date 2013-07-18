@@ -62,7 +62,7 @@ function VideoROIAnalysis(cfg)
         
         % Only keep time, fixation mask, stimulus, 
         % roi number and frame number
-        samples = samples(:, [1 4 6 7 10]);
+        samples = samples(:, [1 4 6 7 10 8]);
         
         for s = 1:size(samples, 1)
             % Fixation cluster started
@@ -116,7 +116,7 @@ function VideoROIAnalysis(cfg)
                 startFrame = samples(regionStarted, 5);
                 stopFrame = samples(s, 5);
                 
-                buffer{end + 1} = sprintf('"%s", "%s", "%s", %d, %d, %d, %d, %d, %d\r\n', ...
+                buffer{end + 1} = sprintf('"%s", "%s", "%s", %d, %d, %d, %d, %d, %d, %.2f\r\n', ...
                     cfg.dataset_info.name, ...
                     cfg.stimuli( samples(s-1,3) ).name, ...
                     regionLabel, ...
@@ -125,7 +125,9 @@ function VideoROIAnalysis(cfg)
                     func(startTime), ...
                     stopFrame, ...
                     func(stopTime), ...
-                    func(duration));
+                    func(duration), ...
+                    mean(samples(regionStarted:(s-1), end)) ...
+                    );
                 
                 regionStarted = s;
             end
@@ -236,13 +238,13 @@ function VideoROIAnalysis(cfg)
                 % Compute fixation corners
                 pixels_per_degree = 22;
                 box_size = 1 * pixels_per_degree;   % in Pixels
-                xs = [samples(sample_slc, 2) + box_size samples(sample_slc, 2) - box_size];
-                ys = [samples(sample_slc, 3) + box_size samples(sample_slc, 3) - box_size];
+                xs = [samples(sample_slc, 2) - box_size/2 samples(sample_slc, 2) + box_size/2];
+                ys = [samples(sample_slc, 3) - box_size/2 samples(sample_slc, 3) + box_size/2];
                                 
                 % Compute overlap between fixation box and region box                
                 xoverlap = min(xs(:, 2), xr(2)) - max(xs(:, 1), xr(1));
                 yoverlap = min(ys(:, 2), yr(2)) - max(ys(:, 1), yr(1));                
-                overlap = (xoverlap .* yoverlap);
+                overlap = (xoverlap .* yoverlap) ./ (box_size .^ 2);
                 
                 % Only update if this region has larger overlap than
                 %  possible previous match.
@@ -284,7 +286,7 @@ function VideoROIAnalysis(cfg)
             error(['Could not open output file: ' message]);
         end
         
-        fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "f_fix_start", "t_fix_start", "f_fix_stop", "t_fix_stop", "fix_duration"\r\n');
+        fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "f_fix_start", "t_fix_start", "f_fix_stop", "t_fix_stop", "fix_duration", "overlap"\r\n');
                         
         numDatasets = project.getNumberOfDatasets();
         units = cfg.units;
