@@ -31,8 +31,11 @@ function VideoROIAnalysis(cfg)
             stimulus_info = project.getInfoForStimulus(i_stimulus);
             [~, sname, ~] = fileparts(stimulus_info.name);
             [~, name, ~] = fileparts(name);
-             
-            if strcmpi(sname, name)
+                        
+            sz = min(length(sname), length(name));            
+            if(sz < 1), continue; end;
+            
+            if strncmpi(sname, name, sz)
                 return;
             end
         end
@@ -173,11 +176,19 @@ function VideoROIAnalysis(cfg)
         
         
         regionLabels = cell(1, length(cfg.stimuli));
+        skippedStimuli = {};    
         
         for s = 1:length(cfg.stimuli)
             % Get stimulus/frame information
             stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli(s).name);
-            if(~isstruct(stimulus_info)), continue; end;
+            
+            if(~isstruct(stimulus_info))
+                if(~any(strcmp(skippedStimuli, cfg.stimuli(s).name)))
+                    disp(['Warning: Skipping stimulis: ' cfg.stimuli(s).name]);
+                    skippedStimuli{end + 1} = cfg.stimuli(s).name;
+                end;
+                continue;
+            end;
 
             frame = cfg.stimuli(s).frame;            
             if(frame == 0), continue; end;
@@ -194,13 +205,18 @@ function VideoROIAnalysis(cfg)
                 break;
             end
             
+            if(~exist(region_filename, 'file'))
+                disp(['Warning: File ' region_filename ' does not exist']);
+                break;
+            end
+            
             regions.loadRegionsFromFile(region_filename);
             
             % Get ROI data
             [roiState, roiPosition, sceneChange] = regions.getFrameInfo(frame);            
             roiPosition(:, :, [1 3]) = roiPosition(:, :, [1 3]) ./ 640 .* 1024;
             roiPosition(:, :, [2 4]) = roiPosition(:, :, [2 4]) ./ 640 .* 1024;
-            
+                        
             regionLabels{s} = cell(1, length(roiState));            
             
             % Add stimulus number to samples
