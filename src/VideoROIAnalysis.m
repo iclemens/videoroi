@@ -240,11 +240,15 @@ function VideoROIAnalysis(cfg)
                 box_size = 1 * pixels_per_degree;   % in Pixels
                 xs = [samples(sample_slc, 2) - box_size/2 samples(sample_slc, 2) + box_size/2];
                 ys = [samples(sample_slc, 3) - box_size/2 samples(sample_slc, 3) + box_size/2];
-                                
+
                 % Compute overlap between fixation box and region box                
                 xoverlap = min(xs(:, 2), xr(2)) - max(xs(:, 1), xr(1));
                 yoverlap = min(ys(:, 2), yr(2)) - max(ys(:, 1), yr(1));                
                 overlap = (xoverlap .* yoverlap) ./ (box_size .^ 2);
+                
+                if(any(overlap < 0.0) || any(overlap > 1.0))
+                    error('Error, overlap between region and fixation box is out of bounds.');
+                end;
                 
                 % Only update if this region has larger overlap than
                 %  possible previous match.
