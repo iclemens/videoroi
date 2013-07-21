@@ -45,7 +45,7 @@ function [output, regionlabels] = vr_assignregions(cfg, data)
             % Display warning if a stimulus is not being analyzed.
             if(~isstruct(stimulus_info))
                 if(~any(strcmp(skipped_stimuli, cfg.stimuli{t}(s).name)))
-                    disp(['Warning: Skipping stimulis: ' cfg.stimuli{t}(s).name]);
+                    disp(['Warning: Skipping stimulus: ' cfg.stimuli{t}(s).name]);
                     skipped_stimuli{end + 1} = cfg.stimuli{t}(s).name;
                 end;
                 continue;
