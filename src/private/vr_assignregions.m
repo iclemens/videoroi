@@ -1,5 +1,11 @@
 function [output, regionlabels] = vr_assignregions(cfg, data)
 % VR_ASSIGNREGIONS  Assign region of interest to every sample.
+%
+%   cfg.project  Project.
+%   cfg.stimuli  Cell-array containing list of stimuli per trial.
+%   cfg.ignoreafterscenechange  Amount of time (in seconds) to ignore after a scene has changed.
+%   cfg.minimumfixationduration  Minimum duration (in seconds) of a fixation.
+%
 
     vr_checkconfig(cfg, 'required', 'project');
     vr_checkconfig(cfg, 'required', 'stimuli');
