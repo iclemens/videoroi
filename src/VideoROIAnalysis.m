@@ -1,4 +1,11 @@
 function VideoROIAnalysis(cfg)
+%
+% Performs the ROI analysis.
+%
+%  cfg.projectDirectory  specifies the project data to be analyzed
+%  cfg.outputFile  specifies where the output should be written to
+%  cfg.units  specifies the time-units used (us, ms, or s)
+%
 
     function cfg = fill_defaults(cfg)
     % FILL_DEFAULTS  Fills missing values in the configuration
