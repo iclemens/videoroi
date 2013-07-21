@@ -15,6 +15,7 @@ function vr_initialize
     pth = fileparts(mfilename('fullpath'));
     
     add_to_path(pth);
+    add_to_path(fullfile(pth, 'utilities'));
     add_to_path(fullfile(pth, 'idf'));
     add_to_path(fullfile(pth, 'gui'));
     add_to_path(fullfile(pth, 'gui/controls'));

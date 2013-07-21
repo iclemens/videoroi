@@ -7,26 +7,6 @@ function VideoROIAnalysis(cfg)
 %  cfg.units  specifies the time-units used (us, ms, or s)
 %
 
-    function cfg = fill_defaults(cfg)
-    % FILL_DEFAULTS  Fills missing values in the configuration
-    %  sturcture with their defaults.
-        if(~isfield(cfg, 'projectDirectory'))
-            cfg.projectDirectory = uigetdir('', 'Open project directory');
-     
-            if(isempty(cfg.projectDirectory))
-                error('Please choose a valid project directory.');
-            end    
-        end
-        
-        if(~isfield(cfg, 'units'))
-            cfg.units = 'us';
-        end
-        
-        if(~isfield(cfg, 'outputFile'))            
-            cfg.outputFile = fullfile(cfg.projectDirectory, 'output.csv');
-        end
-    end
-
 
     function stimulus_info = get_stimulus_info(project, name)
     % GET_STIMULUS_INFO  Find and return information about the 
@@ -288,10 +268,10 @@ function VideoROIAnalysis(cfg)
     % PERFORM_ANALYSIS  Perform analysis for all datasets and all trials.
 
         % Open project
-        project = VideoROIProject(cfg.projectDirectory);
+        project = VideoROIProject(cfg.projectdirectory);
         
         % Open output file and write header
-        [outputFile, message] = fopen(cfg.outputFile, 'w');
+        [outputFile, message] = fopen(cfg.outputfile, 'w');
         
         if(outputFile == -1)
             error(['Could not open output file: ' message]);
@@ -333,12 +313,14 @@ function VideoROIAnalysis(cfg)
         fclose(outputFile);
     end
 
-    vr_initialize();
-
-    % Add default values to configuration structure
     if nargin < 1, cfg = struct; end;
-    cfg = fill_defaults(cfg);
-    
+
+    vr_initialize();
+    cfg = vr_checkconfig(cfg, 'defaults', {'units', 'us'});
+    cfg = vr_checkconfig(cfg, 'defaults', {'projectdirectory', @(x) uigetdir('', 'Open project directory')});    
+    cfg = vr_checkconfig(cfg, 'validate', {'projectdirectory', @(v) ~isempty(v) && ischar(v) && exist(v, 'dir') == 7});
+    cfg = vr_checkconfig(cfg, 'defaults', { 'outputfile', fullfile(cfg.projectdirectory, 'output.csv')});   
+        
     % Then perform analysis
     perform_analysis(cfg);
 end
