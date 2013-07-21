@@ -319,7 +319,7 @@ function VideoROIAnalysis(cfg)
     cfg = vr_checkconfig(cfg, 'defaults', {'units', 'us'});
     cfg = vr_checkconfig(cfg, 'defaults', {'projectdirectory', @(x) uigetdir('', 'Open project directory')});    
     cfg = vr_checkconfig(cfg, 'validate', {'projectdirectory', @(v) ~isempty(v) && ischar(v) && exist(v, 'dir') == 7});
-    cfg = vr_checkconfig(cfg, 'defaults', { 'outputfile', fullfile(cfg.projectdirectory, 'output.csv')});   
+    cfg = vr_checkconfig(cfg, 'defaults', {'outputfile', fullfile(cfg.projectdirectory, 'output.csv')});   
         
     % Then perform analysis
     perform_analysis(cfg);
