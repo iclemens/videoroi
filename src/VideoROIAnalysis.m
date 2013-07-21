@@ -46,6 +46,7 @@ function VideoROIAnalysis(cfg)
             data.trials{t} = samples(:, 2:end);
         end;
         
+        % Assign regions to samples
         scfg = [];
         scfg.project = project;
         scfg.ignoreafterscenechange = cfg.ignoreafterscenechange;
@@ -53,12 +54,14 @@ function VideoROIAnalysis(cfg)
         scfg.stimuli = stimuli;
         [output, regionlabels] = vr_assignregions(scfg, data);
         
+        % Cluster fixations by region
         scfg = [];
         scfg.outputfile = outputFile;
         scfg.units = cfg.units;
         scfg.minimumfixationduration = cfg.minimumfixationduration;
         fixations = vr_clusterfixations(scfg, output);
         
+        % Write fixations to file
         for t = 1:length(fixations.trials)
             for c = 1:size(fixations.trials{t})
                 if(fixations.trials{t}(c, 2) == 0)
