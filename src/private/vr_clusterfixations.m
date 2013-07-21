@@ -1,5 +1,7 @@
-function vr_fixationstofile(cfg, data)
-% VR_FIXATIONSTOFILE  Writes a file containing fixation intervals.
+function output = vr_clusterfixations(cfg, data)
+% VR_CLUSTERFIXATIONS  Clusters fixations by region of interest.
+    
+    vr_initialize();
 
     % Select function to use for unit conversion
     func = @(x) x;
@@ -10,9 +12,14 @@ function vr_fixationstofile(cfg, data)
     elseif(strcmp(cfg.units, 's'))
         func = @(x) round(x / 1000.0) / 1000.0;
     end
-
-    clusterRunning = false;
-    clusterStarted = 1;
+    
+    
+    output = struct();
+    output.cfg = cfg;
+    if(isfield(data, 'cfg')), output.cfg.previous = data.cfg; end;
+    output.labels = {'stimulus_nr', 'roi_nr', 'f_fix_start', 't_fix_start', 'f_fix_stop', 't_fix_stop', 'fix_duration', 'overlap'};
+    
+    output.trials = cell(1, length(data.trials));    
 
     % Find relevant columns
     col_fixation_mask = strcmp(data.labels, 'fixation_mask');   %2
@@ -20,16 +27,20 @@ function vr_fixationstofile(cfg, data)
     col_roi_nr = strcmp(data.labels, 'roi_nr');             %4
     col_frame_nr = strcmp(data.labels, 'frame_nr');         %5
     col_overlap = strcmp(data.labels, 'overlap');
-
+    
+    clusterRunning = false;
+    clusterStarted = 1;    
+    
     for t = 1:length(data.trials)
         nsamples = length(data.time{t});
-        for s = 1:nsamples            
+        
+        for s = 1:nsamples
             % Fixation cluster started
             if(~clusterRunning && data.trials{t}(s, col_fixation_mask))
                 clusterRunning = true;
                 clusterStarted = s;
                 regionStarted = s;
-                buffer = {};
+                mark = size(output.trials{t}, 1) + 1;
             end
 
             % Region of interest has changed
@@ -39,12 +50,6 @@ function vr_fixationstofile(cfg, data)
                         ~(data.trials{t}(s, col_fixation_mask)) || ...     % Not fixating anymore
                         s == nsamples ...   % Last sample
                     ))
-
-                if(data.trials{t}(s-1, col_roi_nr) == 0)
-                    regionLabel = 'OutsideRegions';
-                else
-                    regionLabel = cfg.regionlabels{t}{data.trials{t}(s - 1, col_stimulus_nr)}{data.trials{t}(s - 1, col_roi_nr)};
-                end
 
                 %
                 % The start time of a fixation is in the middle of the
@@ -73,20 +78,17 @@ function vr_fixationstofile(cfg, data)
 
                 startFrame = data.trials{t}(regionStarted, col_frame_nr);
                 stopFrame = data.trials{t}(s, col_frame_nr);
-
-                buffer{end + 1} = sprintf('"%s", "%s", "%s", %d, %d, %d, %d, %d, %d, %.2f\r\n', ...
-                    cfg.datasetname, ...
-                    cfg.stimuli{t}( data.trials{t}(s-1,col_stimulus_nr) ).name, ...
-                    regionLabel, ...
+                
+                output.trials{t} = [output.trials{t}; ...
+                    data.trials{t}(s-1,col_stimulus_nr), ...
                     data.trials{t}(s-1, col_roi_nr), ...
                     startFrame, ...
                     func(startTime), ...
                     stopFrame, ...
                     func(stopTime), ...
                     func(duration), ...
-                    mean(data.trials{t}(regionStarted:(s-1), col_overlap)) ...
-                    );
-
+                    mean(data.trials{t}(regionStarted:(s-1), col_overlap))];
+                
                 regionStarted = s;
             end
 
@@ -108,14 +110,12 @@ function vr_fixationstofile(cfg, data)
 
                 duration = stopTime - startTime;
 
-                % Only except fixation that last > minimum
-                if(duration / 1000 / 1000 >= cfg.minimumfixationduration)
-                    for b = 1:length(buffer)
-                        fprintf(cfg.outputfile, buffer{b});
-                    end
-                    buffer = {};
+                % Only accept fixation that last > minimum
+                if(duration / 1000 / 1000 < cfg.minimumfixationduration)
+                    output.trials{t}(mark:end, :) = [];
                 end;                                
             end;    
         end
     end
+
 end

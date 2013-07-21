@@ -54,13 +54,34 @@ function VideoROIAnalysis(cfg)
         [output, regionlabels] = vr_assignregions(scfg, data);
         
         scfg = [];
-        scfg.datasetname = dataset_info.name;
         scfg.outputfile = outputFile;
-        scfg.regionlabels = regionlabels;
         scfg.units = cfg.units;
-        scfg.stimuli = stimuli;
         scfg.minimumfixationduration = cfg.minimumfixationduration;
-        vr_fixationstofile(scfg, output);
+        fixations = vr_clusterfixations(scfg, output);
+        
+        for t = 1:length(fixations.trials)
+            for c = 1:size(fixations.trials{t})
+                if(fixations.trials{t}(c, 2) == 0)
+                    region_label = 'OutsideRegions';
+                else
+                    region_label = regionlabels{t}{fixations.trials{t}(c, 1)}{fixations.trials{t}(c, 2)};
+                end
+                
+                fprintf(outputFile, sprintf('"%s", "%s", "%s", %d, %d, %d, %d, %d, %d, %.2f\r\n', ...
+                    dataset_info.name, ...
+                    stimuli{t}(fixations.trials{t}(c, 1)).name, ...
+                    region_label, ...
+                    fixations.trials{t}(c, 2), ...
+                    fixations.trials{t}(c, 3), ...
+                    fixations.trials{t}(c, 4), ...
+                    fixations.trials{t}(c, 5), ...
+                    fixations.trials{t}(c, 6), ...
+                    fixations.trials{t}(c, 7), ...
+                    fixations.trials{t}(c, 8)));
+                
+            end;
+        end;
+        
     end
 
     % Close output
