@@ -9,8 +9,8 @@ function [output, regionlabels] = vr_assignregions(cfg, data)
 
     vr_checkconfig(cfg, 'required', 'project');
     vr_checkconfig(cfg, 'required', 'stimuli');
-    vr_checkconfig(cfg, 'defaults', {'ignoreafterscenechange', 0.15});
-    vr_checkconfig(cfg, 'defaults', {'minimumfixationduration', 0.10});
+    cfg = vr_checkconfig(cfg, 'defaults', {'ignoreafterscenechange', 0.15});
+    cfg = vr_checkconfig(cfg, 'defaults', {'minimumfixationduration', 0.10});
 
     % Initialize output structure
     output = [];

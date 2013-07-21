@@ -5,6 +5,8 @@ function VideoROIAnalysis(cfg)
 %  cfg.projectDirectory  specifies the project data to be analyzed
 %  cfg.outputFile  specifies where the output should be written to
 %  cfg.units  specifies the time-units used (us, ms, or s)
+%  cfg.ignoreafterscenechange  Amount of time (in seconds) to ignore after a scene has changed.
+%  cfg.minimumfixationduration  Minimum duration (in seconds) of a fixation.
 %
 
     if nargin < 1, cfg = struct; end;
@@ -14,6 +16,8 @@ function VideoROIAnalysis(cfg)
     cfg = vr_checkconfig(cfg, 'defaults', {'projectdirectory', @(x) uigetdir('', 'Open project directory')});    
     cfg = vr_checkconfig(cfg, 'validate', {'projectdirectory', @(v) ~isempty(v) && ischar(v) && exist(v, 'dir') == 7});
     cfg = vr_checkconfig(cfg, 'defaults', {'outputfile', fullfile(cfg.projectdirectory, 'output.csv')});   
+    cfg = vr_checkconfig(cfg, 'defaults', {'ignoreafterscenechange', 0.15});
+    cfg = vr_checkconfig(cfg, 'defaults', {'minimumfixationduration', 0.10});
 
     
     % Open project and output file
@@ -44,8 +48,8 @@ function VideoROIAnalysis(cfg)
         
         scfg = [];
         scfg.project = project;
-        scfg.ignoreafterscenechange = 0.15;
-        scfg.minimumfixationduration = 0.1;        
+        scfg.ignoreafterscenechange = cfg.ignoreafterscenechange;
+        scfg.minimumfixationduration = cfg.minimumfixationduration;        
         scfg.stimuli = stimuli;
         [output, regionlabels] = vr_assignregions(scfg, data);
         
@@ -55,7 +59,7 @@ function VideoROIAnalysis(cfg)
         scfg.regionlabels = regionlabels;
         scfg.units = cfg.units;
         scfg.stimuli = stimuli;
-        scfg.minimumfixationduration = 0.1;
+        scfg.minimumfixationduration = cfg.minimumfixationduration;
         vr_fixationstofile(scfg, output);
     end
 
