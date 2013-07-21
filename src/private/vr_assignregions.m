@@ -45,8 +45,13 @@ function [output, regionlabels] = vr_assignregions(cfg, data)
     for t = 1:ntrials
         regionlabels{t} = cell(1, length(cfg.stimuli{t}));
         
+        current_stimulus = NaN;
+        
         for s = 1:length(cfg.stimuli{t})
-            stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli{t}(s).name);
+            if(~strcmp(current_stimulus, cfg.stimuli{t}(s).name))
+                stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli{t}(s).name);
+                current_stimulus = cfg.stimuli{t}(s).name;
+            end;
 
             % Display warning if a stimulus is not being analyzed.
             if(~isstruct(stimulus_info))
@@ -143,36 +148,13 @@ function [output, regionlabels] = vr_assignregions(cfg, data)
     
     function stimulus_info = get_stimulus_info(project, name)
     % GET_STIMULUS_INFO  Find and return information about the 
-    % stimulus with name [name] in the specified project.
-
-        persistent cache;        
-        if(~iscell(cache)), cache = cell(0, 2); end;
-        
-        if(size(cache, 1) > 0)            
-            cache_index = strcmp(cache(:, 1), name);
-            stimulus_info = cache(cache_index, 2);
-            if(~isempty(stimulus_info)), return; end;
-        end;
+    % stimulus with name [name] in the specified project.    
     
-        n_stimuli = project.getNumberOfStimuli();
-        [~, oname, ~] = fileparts(name);
-
-        for i_stimulus = 1:n_stimuli
-            stimulus_info = project.getInfoForStimulus(i_stimulus);
-            [~, sname, ~] = fileparts(stimulus_info.name);
-                        
-            sz = min(length(sname), length(oname));            
-            if(sz < 1), continue; end;
-            
-            if strncmpi(sname, oname, sz)
-                cache{end + 1, 1} = name;
-                cache{end, 2} = stimulus_info;
-                return;
-            end
-        end
-    
-        cache{end + 1, 1} = name;
-        cache{end, 2} = 0;
-        stimulus_info = 0;
+        stimulus_info = project.getInfoForStimulus(name);
+                
+        if(isnan(stimulus_info))
+            dots = find(name == '.');            
+            stimulus_info = project.getInfoForStimulus(name(1:dots(end) - 1));
+        end 
     end    
 end

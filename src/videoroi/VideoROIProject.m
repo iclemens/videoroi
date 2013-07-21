@@ -205,7 +205,7 @@ classdef VideoROIProject < EventProvider
             % Number of stimuli (images and videos)
             
             count = length(obj.stimuli);
-        end
+        end               
         
         
         function info = getInfoForStimulus(obj, index)
@@ -213,8 +213,13 @@ classdef VideoROIProject < EventProvider
             
             % Name of stimulus given, convert to index
             if ischar(index)
-                index = findStimulusByName(index);
-            end
+                index = obj.findStimulusByName(index);            
+
+                if(isempty(index))
+                    info = NaN;
+                    return;
+                end;
+            end;
             
             info = obj.stimuli(index);           
             
@@ -255,16 +260,11 @@ classdef VideoROIProject < EventProvider
         
         function index = findStimulusByName(obj, stimulusName)
             % Finds a stimulus given its name.
+            index = strcmpi({obj.stimuli(:).name}, stimulusName);
             
-            for s = 1:length(obj.stimuli)
-                if(strcmp(stimuli(s).name, stimulusName))
-                    index = s;
-                    return;
-                end
-            end
-            
-            % Not found, return NaN
-            index = NaN;
+            if(sum(index) > 1)
+                error('More than one stimulus found with this name');
+            end;
         end
         
         
