@@ -22,10 +22,10 @@ function output = vr_clusterfixations(cfg, data)
     output.trials = cell(1, length(data.trials));    
 
     % Find relevant columns
-    col_fixation_mask = strcmp(data.labels, 'fixation_mask');   %2
-    col_stimulus_nr = strcmp(data.labels, 'stimulus_nr');       %3
-    col_roi_nr = strcmp(data.labels, 'roi_nr');             %4
-    col_frame_nr = strcmp(data.labels, 'frame_nr');         %5
+    col_fixation_mask = strcmp(data.labels, 'fixation_mask');
+    col_stimulus_nr = strcmp(data.labels, 'stimulus_nr');
+    col_roi_nr = strcmp(data.labels, 'roi_nr');
+    col_frame_nr = strcmp(data.labels, 'frame_nr');
     col_overlap = strcmp(data.labels, 'overlap');
     
     clusterRunning = false;
@@ -34,22 +34,35 @@ function output = vr_clusterfixations(cfg, data)
     for t = 1:length(data.trials)
         nsamples = length(data.time{t});
         
-        for s = 1:nsamples
-            % Fixation cluster started
-            if(~clusterRunning && data.trials{t}(s, col_fixation_mask))
-                clusterRunning = true;
-                clusterStarted = s;
-                regionStarted = s;
-                mark = size(output.trials{t}, 1) + 1;
-            end
+        sample_length = data.time{t}(2) - data.time{t}(1);
+        
+        s = 1;
+        while(s < nsamples)            
+            % Skip to first cluster
+            fixating = data.trials{t}(s:end, col_fixation_mask);
+            stim_presented = data.trials{t}(s:end, col_stimulus_nr) > 0;
+            
+            delta_s = first(fixating & stim_presented);
+            if(isempty(delta_s)), break; end;
+            s = s + delta_s - 1;
 
-            % Region of interest has changed
-            if(clusterRunning && s > 1 && data.trials{t}(s - 1, col_stimulus_nr) > 0 && ...
-                    ( ...                        
-                        (data.trials{t}(s, col_roi_nr) ~= data.trials{t}(regionStarted, col_roi_nr)) || ... % Region has changed
-                        ~(data.trials{t}(s, col_fixation_mask)) || ...     % Not fixating anymore
-                        s == nsamples ...   % Last sample
-                    ))
+            % Store information about cluster
+            clusterStarted = s;
+            regionStarted = s;
+            mark = size(output.trials{t}, 1) + 1;           
+            
+            % While still fixating...
+            while(data.trials{t}(s, col_fixation_mask))
+                % Find next time region has changed or fixation is lost
+                stim_presented = data.trials{t}((s+1):end, col_stimulus_nr) > 0;            
+                region_changed = data.trials{t}((s+1):end, col_roi_nr) ~= data.trials{t}(regionStarted, col_roi_nr);
+                not_fixating = ~data.trials{t}((s+1):end, col_fixation_mask);
+                last_sample = ((s+1):nsamples) == nsamples;
+
+                delta_s = first(stim_presented & (region_changed | not_fixating | last_sample'));
+
+                if(isempty(delta_s)), break; end;
+                s = s + delta_s;
 
                 %
                 % The start time of a fixation is in the middle of the
@@ -65,56 +78,45 @@ function output = vr_clusterfixations(cfg, data)
                 if(regionStarted > 1)
                     startTime = mean(data.time{t}(regionStarted - [0 1]));
                 else
-                    startTime = data.time{t}(regionStarted);
+                    startTime = data.time{t}(regionStarted) - sample_length / 2;
                 end;
-
-                if(s < nsamples)
+                
+                if(s > 1)
                     stopTime = mean(data.time{t}(s - [0 1]));
                 else
-                    stopTime = data.time{t}(s);
+                    stopTime = data.time{t}(regionStarted) - sample_length / 2;
                 end;
 
                 duration = stopTime - startTime;
 
                 startFrame = data.trials{t}(regionStarted, col_frame_nr);
                 stopFrame = data.trials{t}(s, col_frame_nr);
-                
-                output.trials{t} = [output.trials{t}; ...
-                    data.trials{t}(s-1,col_stimulus_nr), ...
-                    data.trials{t}(s-1, col_roi_nr), ...
-                    startFrame, ...
-                    func(startTime), ...
-                    stopFrame, ...
-                    func(stopTime), ...
-                    func(duration), ...
-                    mean(data.trials{t}(regionStarted:(s-1), col_overlap))];
-                
+
+                 output.trials{t} = [output.trials{t}; ...
+                     data.trials{t}(s-1,col_stimulus_nr), ...
+                     data.trials{t}(s-1, col_roi_nr), ...
+                     startFrame, ...
+                     func(startTime), ...
+                     stopFrame, ...
+                     func(stopTime), ...
+                     func(duration), ...
+                     mean(data.trials{t}(regionStarted:(s-1), col_overlap))];
+
                 regionStarted = s;
-            end
 
+                if(s == nsamples), break; end;
+                s = s + 1;
+            end;
+            
             % Fixation stopped
-            if(clusterRunning && (~data.trials{t}(s, col_fixation_mask) || s == nsamples))
-                clusterRunning = false;
+            stopTime = data.time{t}(s) - sample_length / 2;
+            startTime = data.time{t}(clusterStarted) - sample_length / 2;
+            duration = stopTime - startTime;
 
-                if(s < nsamples)
-                    stopTime = mean(data.time{t}(s - [0 1]));
-                else
-                    stopTime = mean(data.time{t}(s));
-                end
-
-                if(clusterStarted > 1)
-                    startTime = mean(data.time{t}(clusterStarted - [1 0]));
-                else
-                    startTime = data.time{t}(clusterStarted);
-                end
-
-                duration = stopTime - startTime;
-
-                % Only accept fixation that last > minimum
-                if(duration / 1000 / 1000 < cfg.minimumfixationduration)
-                    output.trials{t}(mark:end, :) = [];
-                end;                                
-            end;    
+            % Only accept fixation that last > minimum
+            if(duration / 1000 / 1000 < cfg.minimumfixationduration)
+                output.trials{t}(mark:end, :) = [];
+            end;                
         end
     end
 
