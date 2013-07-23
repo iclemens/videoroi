@@ -18,14 +18,13 @@ function VideoROIAnalysis(cfg)
     cfg = vr_checkconfig(cfg, 'defaults', {'outputfile', fullfile(cfg.projectdirectory, 'output.csv')});   
     cfg = vr_checkconfig(cfg, 'defaults', {'ignoreafterscenechange', 0.15});
     cfg = vr_checkconfig(cfg, 'defaults', {'minimumfixationduration', 0.10});
-
+    cfg = vr_checkconfig(cfg, 'defaults', {'method', 'highest_score'});
     
     % Open project and output file
     project = VideoROIProject(cfg.projectdirectory);
     [outputFile, message] = fopen(cfg.outputfile, 'w');
     if(outputFile == -1), error(['could not open output file: ' message]); end
 
-    % Write header (fixme: should be done in other function!)
     fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "f_fix_start", "t_fix_start", "f_fix_stop", "t_fix_stop", "fix_duration", "overlap"\r\n');
 
     numDatasets = project.getNumberOfDatasets();
@@ -44,22 +43,32 @@ function VideoROIAnalysis(cfg)
             [samples, columns] = dataset.getAnnotationsForTrial(t);
             data.time{t} = samples(:, 1);
             data.trials{t} = samples(:, 2:end);
+        end;       
+
+        if strcmp(cfg.method, 'highest_score')
+            scfg = [];
+            scfg.project = project;
+            scfg.units = cfg.units;
+            scfg.ignoreafterscenechange = cfg.ignoreafterscenechange;
+            scfg.minimumfixationduration = cfg.minimumfixationduration;
+            scfg.stimuli = stimuli;
+            [fixations, regionlabels] = vr_assignclusters(scfg, data);
+        elseif strcmp(cfg.method, 'sub_fixation')       
+            % Assign regions to samples
+            scfg = [];
+            scfg.project = project;
+            scfg.ignoreafterscenechange = cfg.ignoreafterscenechange;
+            scfg.minimumfixationduration = cfg.minimumfixationduration;        
+            scfg.stimuli = stimuli;
+            [output, regionlabels] = vr_assignregions(scfg, data);
+
+            % Cluster fixations by region
+            scfg = [];
+            scfg.outputfile = outputFile;
+            scfg.units = cfg.units;
+            scfg.minimumfixationduration = cfg.minimumfixationduration;
+            fixations = vr_clusterfixations(scfg, output);
         end;
-        
-        % Assign regions to samples
-        scfg = [];
-        scfg.project = project;
-        scfg.ignoreafterscenechange = cfg.ignoreafterscenechange;
-        scfg.minimumfixationduration = cfg.minimumfixationduration;        
-        scfg.stimuli = stimuli;
-        [output, regionlabels] = vr_assignregions(scfg, data);
-        
-        % Cluster fixations by region
-        scfg = [];
-        scfg.outputfile = outputFile;
-        scfg.units = cfg.units;
-        scfg.minimumfixationduration = cfg.minimumfixationduration;
-        fixations = vr_clusterfixations(scfg, output);
         
         % Write fixations to file
         for t = 1:length(fixations.trials)
