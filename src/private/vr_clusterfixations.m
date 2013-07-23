@@ -34,7 +34,11 @@ function output = vr_clusterfixations(cfg, data)
     for t = 1:length(data.trials)
         nsamples = length(data.time{t});
         
-        sample_length = data.time{t}(2) - data.time{t}(1);
+        % Minimum number of samples required is 2. Probably won't
+        %  result in any useful data, but the algorithm won't crash.
+        if nsamples < 2, continue; end;
+        
+        sample_length = data.time{t}(2) - data.time{t}(1);                
         
         s = 1;
         while(s < nsamples)            
