@@ -1,6 +1,5 @@
 function [output, regionlabels] = vr_assignclusters(cfg, data)
 % VR_ASSIGNCLUSTER  Assign ROIs to fixation clusters.
-%  FIXME: ignoreafterscenechange and minimumfixationduration not taken into account!
 %  FIXME: Currently only works for movies.
 %
 
@@ -77,6 +76,18 @@ function [output, regionlabels] = vr_assignclusters(cfg, data)
             regionlabels{t}{1}{r} = regions.getLabelForRegion(r);
         end
         
+        % Remove fixations after scene change
+        for s = 1:length(cfg.stimuli{t})
+            frame_nr = cfg.stimuli{t}(s).frame;
+            [~, ~, ischange] = regions.getFrameInfo(frame_nr + 1);
+            if ~ischange, continue; end;
+            
+            to_remove = data.time{t} >= cfg.stimuli{t}(s).onset & ...
+                data.time{t} <= cfg.stimuli{t}(s).onset + cfg.ignoreafterscenechange * 1000 * 1000;
+            
+            data.trials{t}(to_remove, col_fixation_mask) = 0;
+        end
+        
         % Then cluster and assign ROIs
         clusters = idf_cluster_mask(data.trials{t}(:, col_fixation_mask));
         output.trials{t} = nan(size(clusters, 1), length(output.labels));
@@ -138,8 +149,10 @@ function [output, regionlabels] = vr_assignclusters(cfg, data)
                 frame_nrs(clusters(c, 2)), func(stop_time), ...
                 func(stop_time - start_time), score];
             
-            output.trials{t}(cluster_ptr, :) = cluster_info;
-            cluster_ptr = cluster_ptr + 1;
+            if (stop_time - start_time) >= cfg.minimumfixationduration * 1000.0 * 1000.0
+                output.trials{t}(cluster_ptr, :) = cluster_info;
+                cluster_ptr = cluster_ptr + 1;
+            end;
         end
         
         % Remove excess rows
