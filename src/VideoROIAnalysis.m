@@ -68,6 +68,8 @@ function VideoROIAnalysis(cfg)
             scfg.units = cfg.units;
             scfg.minimumfixationduration = cfg.minimumfixationduration;
             fixations = vr_clusterfixations(scfg, output);
+        else
+            error('Unknown ROI assignment method specified.');
         end;
         
         % Write fixations to file
