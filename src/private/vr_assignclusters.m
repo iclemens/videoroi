@@ -21,7 +21,7 @@ function [output, regionlabels] = vr_assignclusters(cfg, data)
     elseif(strcmp(cfg.units, 's'))
         func = @(x) round(x / 1000.0) / 1000.0;
     end
-    
+
     % Prepare output structure
     output = struct();
     output.cfg = cfg;
@@ -81,7 +81,7 @@ function [output, regionlabels] = vr_assignclusters(cfg, data)
         for r = 1:nregions
             regionlabels{t}{1}{r} = regions.getLabelForRegion(r);
         end
-        
+
         % Remove fixations after scene change
         for s = 1:length(cfg.stimuli{t})
             frame_nr = cfg.stimuli{t}(s).frame;
@@ -98,7 +98,7 @@ function [output, regionlabels] = vr_assignclusters(cfg, data)
         clusters = idf_cluster_mask(data.trials{t}(:, col_fixation_mask));
         output.trials{t} = nan(size(clusters, 1), length(output.labels));
         cluster_ptr = 1;
-        
+
         for c = 1:size(clusters, 1)
             cluster_indices = clusters(c, 1):clusters(c, 2);
             
