@@ -234,6 +234,8 @@ classdef VideoROIDataset < handle
         %  [start sample, stop sample]
         %
         
+            minimum_saccade_duration = 0.015; % 15 milliseconds
+        
             % No samples, means no saccades
             if(isempty(data) || isempty(time))
                 saccades = zeros(0, 2);
@@ -306,7 +308,8 @@ classdef VideoROIDataset < handle
                 end
             end
             
-            % Todo: do we want to add an amplitude threshold?
+            % Remove saccades that do not meet minimum duration
+            saccades( diff(time(saccades), [], 2) < minimum_saccade_duration, :) = [];            
         end        
         
         
@@ -352,9 +355,10 @@ classdef VideoROIDataset < handle
                 if(~isempty(time) && ~isempty(gaze))
                     % Compute time between samples
                     sample_time = time(2) - time(1);
-   
+
                     % Remove fixation which do not meet minimum duration
                     fixation_time = sample_time * diff(fixations, [], 2);
+
                     fixations(fixation_time < minimum_fixation_duration, :) = [];
 
                     fixation_mask = idf_mask_cluster(fixations, length(time));
