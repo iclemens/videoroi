@@ -52,6 +52,7 @@ function VideoROIAnalysis(cfg)
             scfg.ignoreafterscenechange = cfg.ignoreafterscenechange;
             scfg.minimumfixationduration = cfg.minimumfixationduration;
             scfg.stimuli = stimuli;
+
             [fixations, regionlabels] = vr_assignclusters(scfg, data);
         elseif strcmp(cfg.method, 'sub_fixation')       
             % Assign regions to samples
