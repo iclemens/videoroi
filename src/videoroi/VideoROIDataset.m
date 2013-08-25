@@ -345,6 +345,10 @@ classdef VideoROIDataset < handle
                 time = obj.data(t).samples(:, col_time) * 1e-6;
                 gaze = obj.data(t).samples(:, col_gaze);
                 
+                cfg = [];
+                cfg.frequency = 1 / (time(2) - time(1));
+                gaze = ed_filter(cfg, gaze);
+                
                 saccades = obj.findSaccades(time, gaze, saccade_threshold, extension_angle_threshold); 
                 saccade_mask = idf_mask_cluster(saccades, length(time));                
                 
