@@ -1,4 +1,4 @@
-function saccades = ed_vel_find_saccades(~, time, data, saccade_threshold, extension_angle_threshold)    
+function saccades = ed_vel_find_saccades(cfg, time, data) 
     % ED_VEL_FIND_SACCADES  Detects saccades using a (velocity) threshold.
     % It then tries to extend the saccade periods as long as
     % the angle is similar and the speed is decreasing.
@@ -7,7 +7,11 @@ function saccades = ed_vel_find_saccades(~, time, data, saccade_threshold, exten
     %  [start sample, stop sample]
     %
     
-    minimum_saccade_duration = 0.015; % 15 milliseconds
+    vr_initialize();
+    
+    cfg = vr_checkconfig(cfg, 'defaults', {'minimum_saccade_duration', 0.015});
+    cfg = vr_checkconfig(cfg, 'defaults', {'saccade_threshold', degtorad(45)});
+    cfg = vr_checkconfig(cfg, 'defaults', {'extension_angle_threshold', 0.5 * pi});
     
     % No samples, means no saccades
     if(isempty(data) || isempty(time))
@@ -23,8 +27,8 @@ function saccades = ed_vel_find_saccades(~, time, data, saccade_threshold, exten
     
     % Apply speed threshold to find saccades
     saccade_mask = ...
-        ([0; speed] > saccade_threshold) | ...
-        ([speed; 0] > saccade_threshold);
+        ([0; speed] > cfg.saccade_threshold) | ...
+        ([speed; 0] > cfg.saccade_threshold);
     
     saccades = idf_cluster_mask(saccade_mask);
     
@@ -46,7 +50,7 @@ function saccades = ed_vel_find_saccades(~, time, data, saccade_threshold, exten
             angle = prevAngle - currAngle;
             angle = mod(angle + pi, 2 * pi) - pi;
             
-            angle_crit = abs(angle) < extension_angle_threshold;
+            angle_crit = abs(angle) < cfg.extension_angle_threshold;
             speed_crit = speed(saccades(c, 1) - 1) < speed(saccades(c, 1));
             
             if(angle_crit && speed_crit)
@@ -70,7 +74,7 @@ function saccades = ed_vel_find_saccades(~, time, data, saccade_threshold, exten
             angle = nextAngle - currAngle;
             angle = mod(angle + pi, 2 * pi) - pi;
             
-            angle_crit = abs(angle) < extension_angle_threshold;
+            angle_crit = abs(angle) < cfg.extension_angle_threshold;
             speed_crit = speed(saccades(c, 2) - 1) > speed(saccades(c, 2));
             
             if(angle_crit && speed_crit)
@@ -82,6 +86,6 @@ function saccades = ed_vel_find_saccades(~, time, data, saccade_threshold, exten
     end
     
     % Remove saccades that do not meet minimum duration
-    saccades( diff(time(saccades), [], 2) < minimum_saccade_duration, :) = [];
+    saccades( diff(time(saccades), [], 2) < cfg.minimum_saccade_duration, :) = [];
     
 end

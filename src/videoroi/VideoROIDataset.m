@@ -228,10 +228,11 @@ classdef VideoROIDataset < handle
         function annotateTrace(obj)
             % Detect saccades and fixations
 
-            % Threshold in degrees per second
-            saccade_threshold = degtorad(45);
-            minimum_fixation_duration = 0.1; %100ms
-            extension_angle_threshold = 0.5 * pi;
+            % Configuration of event detection algorithm
+            edcfg = struct();
+            edcfg.saccade_threshold = degtorad(45);
+            edcfg.minimum_fixation_duration = 0.1; %100ms
+            edcfg.extension_angle_threshold = 0.5 * pi;
             
             col_time = idf_find_columns({'Time'}, obj.header);
             col_gaze = idf_find_columns({'R Gaze X [rad]', 'R Gaze Y [rad]'}, obj.header);
@@ -256,12 +257,12 @@ classdef VideoROIDataset < handle
                 
                 time = obj.data(t).samples(:, col_time) * 1e-6;
                 gaze = obj.data(t).samples(:, col_gaze);
-                
-                cfg = [];
+
+                cfg = struct();
                 cfg.frequency = 1 / (time(2) - time(1));
                 gaze = ed_filter(cfg, gaze);
                 
-                saccades = ed_vel_find_saccades(cfg, time, gaze, saccade_threshold, extension_angle_threshold); 
+                saccades = ed_vel_find_saccades(edcfg, time, gaze); 
                 saccade_mask = idf_mask_cluster(saccades, length(time));                
                 
                 % Fixations are not saccades
@@ -275,7 +276,7 @@ classdef VideoROIDataset < handle
                     % Remove fixation which do not meet minimum duration
                     fixation_time = sample_time * diff(fixations, [], 2);
 
-                    fixations(fixation_time < minimum_fixation_duration, :) = [];
+                    fixations(fixation_time < edcfg.minimum_fixation_duration, :) = [];
 
                     fixation_mask = idf_mask_cluster(fixations, length(time));
                 end;
