@@ -257,32 +257,11 @@ classdef VideoROIDataset < handle
                 
                 time = obj.data(t).samples(:, col_time) * 1e-6;
                 gaze = obj.data(t).samples(:, col_gaze);
-
-                cfg = struct();
-                cfg.frequency = 1 / (time(2) - time(1));
-                gaze = ed_filter(cfg, gaze);
                 
-                saccades = ed_vel_find_saccades(edcfg, time, gaze); 
-                saccade_mask = idf_mask_cluster(saccades, length(time));                
-                
-                % Fixations are not saccades
-                fixation_mask = ~saccade_mask;                
-                fixations = idf_cluster_mask(fixation_mask);
+                events = ed_vel_detect_events(edcfg, time, gaze);
 
-                if(~isempty(time) && ~isempty(gaze))
-                    % Compute time between samples
-                    sample_time = time(2) - time(1);
-
-                    % Remove fixation which do not meet minimum duration
-                    fixation_time = sample_time * diff(fixations, [], 2);
-
-                    fixations(fixation_time < edcfg.minimum_fixation_duration, :) = [];
-
-                    fixation_mask = idf_mask_cluster(fixations, length(time));
-                end;
-
-                obj.data(t).saccade_mask = saccade_mask;
-                obj.data(t).fixation_mask = fixation_mask;
+                obj.data(t).saccade_mask = idf_mask_cluster(events.saccades, length(time));
+                obj.data(t).fixation_mask = idf_mask_cluster(events.fixations, length(time));
             end
         end        
     end
