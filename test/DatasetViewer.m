@@ -56,13 +56,9 @@ function dataset = DatasetViewer(cfg)
     axes(h(1));
     plot(data(:, 1), pos(:, 1), 'r', 'LineWidth', 2);
     
+    axes(h(2));
+    plot(data(:, 1), pos(:, 2), 'r', 'LineWidth', 2);
+    
     axes(h(3));
     plot(data(:, 1), vel(:, 3), 'r', 'LineWidth', 2);
-    
-    %axes(h(3));
-    %data( data(:, 4) == 0 , 2) = NaN;    
-    %plot(data(:, 1), data(:, 2), 'r', 'LineWidth', 2);
-    %plot(data(:, 1), pos(:, 2), 'r--', 'LineWidth', 2);
-    
-    linkaxes(h, 'x');
 end
