@@ -16,6 +16,7 @@ function vr_initialize
     
     add_to_path(pth);
     add_to_path(fullfile(pth, 'utilities'));
+    add_to_path(fullfile(pth, 'algorithms'));
     add_to_path(fullfile(pth, 'idf'));
     add_to_path(fullfile(pth, 'gui'));
     add_to_path(fullfile(pth, 'gui/controls'));
