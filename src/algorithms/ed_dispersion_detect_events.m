@@ -51,6 +51,5 @@ function events = ed_dispersion_detect_events(cfg, time, gaze)
 
     function d = dispersion(points)
         d = mean(max(points) - min(points));
-        %d = sqrt(sum( (max(points) - min(points)) .^ 2 ));
     end
 end

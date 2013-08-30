@@ -7,21 +7,19 @@ function DatasetViewer(cfg)
 
     project = VideoROIProject(cfg.projectdirectory);    
     numDatasets = project.getNumberOfDatasets();
-        
+
     datasetInfo = project.getInfoForDataset(1);    
     dataset = VideoROIDataset(datasetInfo, 'Task4Logic');
 
     [data, columns] = dataset.getAnnotationsForTrial(3, 'radians');
     data(:, 1) = (data(:, 1) - data(1, 1)) / 1e6;
 
-    
     cfg = [];
     cfg.frequency = 1 / (data(2, 1) - data(1, 1));
     [pos, vel, acc] = ed_filter(cfg, data(:, 2:3));
-    
-    
+
     figure(1); clf;
-    
+
     h = nan(3, 1);    
     for i = 1:3
         h(i) = subplot(3, 1, i);
@@ -29,13 +27,12 @@ function DatasetViewer(cfg)
         xlabel('Time (seconds)');
     end;    
     linkaxes(h, 'x');
-    
+
     axes(h(1));
     title('Horizontal Eye Position (pixels)');    
     plot(data(:, 1), data(:, 2), 'b');
-    plot(data(:, 1), pos(:, 1), 'b--');
-    
-    
+    plot(data(:, 1), pos(:, 1), 'b--');    
+
     axes(h(2));
     title('Vertical Eye Position (pixels)');    
     plot(data(:, 1), data(:, 3), 'b');
