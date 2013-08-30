@@ -11,6 +11,7 @@ classdef VideoROIDataset < handle
         screen;
 
         taskName = '';
+        methodName = '';
         
         % Data from eye-tracker
         header;
@@ -26,6 +27,8 @@ classdef VideoROIDataset < handle
             obj.datasetInfo = datasetInfo;
             obj.loadCache();
 
+            obj.methodName = 'velocity';
+            
             scr = [];
             scr.distance = 500;
             scr.resolution = [1024 768];
@@ -256,7 +259,7 @@ classdef VideoROIDataset < handle
             
             col_time = idf_find_columns({'Time'}, obj.header);
             col_gaze = idf_find_columns({'R Gaze X [rad]', 'R Gaze Y [rad]'}, obj.header);
-            
+
             % Determine which columns to use
             if(isempty(col_time))
                 error('VideoROI:DatasetInvalid', ...
@@ -268,6 +271,8 @@ classdef VideoROIDataset < handle
                     'Selected dataset does not contain gaze information.');
             end
             
+            detectFunc = str2func(['ed_' obj.methodName '_detect_events']);
+            
             for t = 1:length(obj.data)
                 % Raise an error when the dataset is empty                
                 if(size(obj.data(t).samples, 2) == 0)
@@ -278,10 +283,19 @@ classdef VideoROIDataset < handle
                 time = obj.data(t).samples(:, col_time) * 1e-6;
                 gaze = obj.data(t).samples(:, col_gaze);
                 
-                events = ed_vel_detect_events(edcfg, time, gaze);
+                events = detectFunc(edcfg, time, gaze);
 
-                obj.data(t).saccade_mask = idf_mask_cluster(events.saccades, length(time));
-                obj.data(t).fixation_mask = idf_mask_cluster(events.fixations, length(time));
+                if isfield(events, 'saccades')
+                    obj.data(t).saccade_mask = idf_mask_cluster(events.saccades, length(time));
+                else
+                    obj.data(t).saccade_mask = zeros(length(time), 1);
+                end
+                
+                if isfield(events, 'fixations')
+                    obj.data(t).fixation_mask = idf_mask_cluster(events.fixations, length(time));
+                else
+                    obj.data(t).fixation_mask = zeros(length(time), 1);
+                end
             end
         end        
     end
