@@ -1,5 +1,5 @@
-function dataset = DatasetViewer(cfg)
-    
+function DatasetViewer(cfg)
+     
     if nargin < 1, cfg = struct; end;
     
     vr_initialize();
@@ -11,7 +11,7 @@ function dataset = DatasetViewer(cfg)
     datasetInfo = project.getInfoForDataset(1);    
     dataset = VideoROIDataset(datasetInfo, 'Task4Logic');
 
-    [data, columns] = dataset.getAnnotationsForTrial(3);
+    [data, columns] = dataset.getAnnotationsForTrial(3, 'radians');
     data(:, 1) = (data(:, 1) - data(1, 1)) / 1e6;
 
     

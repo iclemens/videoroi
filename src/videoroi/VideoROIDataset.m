@@ -86,8 +86,12 @@ classdef VideoROIDataset < handle
         end
         
         
-        function [samples, columns] = getAnnotationsForTrial(obj, trialId)
-            [samples, columns] = obj.getAnnotationsForInterval(trialId, -Inf, Inf);
+        function [samples, columns] = getAnnotationsForTrial(obj, trialId, units)
+            if nargin < 3
+                [samples, columns] = obj.getAnnotationsForInterval(trialId, -Inf, Inf);
+            else
+                [samples, columns] = obj.getAnnotationsForInterval(trialId, -Inf, Inf, units);
+            end
         end
                        
         
@@ -99,15 +103,31 @@ classdef VideoROIDataset < handle
                 [samples, columns] = obj.getAnnotationsForInterval(trialId, 0, 0);
                 return
             end
-                        
+
             [samples, columns] = obj.getAnnotationsForInterval(trialId, obj.data(trialId).stimulus(sel).onset, obj.data(trialId).stimulus(sel).offset);
         end
 
         
-        function [samples, columns] = getAnnotationsForInterval(obj, trialId, first, last)
+        function [samples, columns] = getAnnotationsForInterval(obj, trialId, first, last, units)
+            % Returns fixation and saccade annotations together with
+            % eye position information for a specific interval.
+            % Unit specifies the unit in which to express the eye
+            % movement information, currently only 'pixels' and 'radians'
+            % are supported.
+
+            % The default unit is pixels
+            if nargin < 5, units = 'pixels'; end;
+            
             dta = obj.data(trialId);
             
-            columns = {'Time', 'R POR X [px]', 'R POR Y [px]'};
+            if strcmp(units, 'pixels')
+                columns = {'Time', 'R POR X [px]', 'R POR Y [px]'};
+            elseif strcmp(units, 'radians')
+                columns = {'Time', 'R Gaze X [rad]', 'R Gaze Y [rad]'};
+            else
+                error('VideoROI:Dataset:invalidUnit', 'Only pixels and radians are supported');
+            end
+            
             cols = idf_find_columns(columns, obj.header);
             
             columns{end + 1} = 'Fixation mask';
