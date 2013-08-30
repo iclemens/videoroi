@@ -1,4 +1,4 @@
-function events = ed_vel_detect_events(cfg, time, data)
+function events = ed_velocity_detect_events(cfg, time, data)
     
     events = struct();
     
