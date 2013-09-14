@@ -205,7 +205,7 @@ classdef VideoROIView < EventProvider
                 set(obj.overlapMenuItem, 'Label', 'Disallow &overlap');
             end
         end
-
+        
 
         %
         % Updates all ROI rectangles in the current frame
@@ -300,7 +300,7 @@ classdef VideoROIView < EventProvider
             
                 % Update constraints on ROI rectangles
                 %numROIs = min(obj.engine.getNumberOfROIs(), length(obj.frameRect));
-                fcn = makeConstrainToRectFcn('imrect', get(h, 'XLim'), get(h, 'YLim'));
+                fcn = obj.makeConstraintFcn(); % makeConstrainToRectFcn('imrect', get(h, 'XLim'), get(h, 'YLim'));
                 numROIs = length(obj.frameRect);
                 for i = 1:numROIs
                     if(obj.frameRect{i} > 0)
@@ -489,8 +489,42 @@ classdef VideoROIView < EventProvider
                 obj.roiRectColors{i} = color/255;
             end
         end
-        
-        
+
+
+        %
+        % Returns constraint function
+        %
+        % @param Region of interest to create function for.
+        %
+        function fcn = makeConstraintFcn(obj, roi)
+
+            % Share with returned function, when this
+            % changes, this function should be
+            % called again.
+            xlim = get(get(obj.frameImage, 'Parent'), 'XLim') + [0.5 -0.5];
+            ylim = get(get(obj.frameImage, 'Parent'), 'YLim') + [0.5 -0.5];
+                        
+            function cpos = overlapConstraintFcn(pos)
+                % Contrain position to window
+                cpos = [NaN NaN NaN NaN];
+                cpos(1) = min(max(pos(1), xlim(1)), xlim(2) - 1);
+                cpos(2) = min(max(pos(2), xlim(1)), ylim(2) - 1);                
+                wlim = xlim(2) - cpos(1);
+                hlim = ylim(2) - cpos(2);                
+                cpos(3) = min(max(pos(3), 1), wlim);
+                cpos(4) = min(max(pos(4), 1), hlim);
+                
+                % Overlap is allowed, we're done
+                if obj.overlapState == 1, return; end;
+                
+                % Overlap is not allowed, set additional constraints
+                % FIXME
+            end
+            
+            fcn = @overlapConstraintFcn;
+        end
+
+
         %
         % Creates a new ROI rectangle
         %
@@ -507,7 +541,7 @@ classdef VideoROIView < EventProvider
             xl = get(get(obj.frameImage, 'Parent'), 'XLim');
             yl = get(get(obj.frameImage, 'Parent'), 'YLim');
             
-            fcn = makeConstrainToRectFcn('imrect', xl, yl);
+            fcn = obj.makeConstraintFcn(); % makeConstrainToRectFcn('imrect', xl, yl);
             setPositionConstraintFcn(obj.frameRect{i}, fcn);            
             
             setColor(obj.frameRect{i}, obj.roiRectColors{i});
