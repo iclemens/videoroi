@@ -61,6 +61,7 @@ classdef VideoROI < handle
             obj.view.addEventListener('playPauseVideo', @(src) obj.onPlayPauseVideo(src));
             
             obj.view.addEventListener('setTask', @(src, taskName) obj.onSetTask(src, taskName));
+            obj.view.addEventListener('toggleOverlap', @(src) obj.onToggleOverlap(src));
             
             obj.view.addEventListener('performAnalysis', @(src, filename) obj.onPerformAnalysis(src, filename));
         end
@@ -71,9 +72,10 @@ classdef VideoROI < handle
         %%%%%%%%%%%%%%%%%%%%%%
 
         
-        function onNewProject(obj, ~, projectDirectory)
+        function onNewProject(obj, ~, projectDirectory)            
             try
                 obj.project = VideoROIProject(projectDirectory);
+                obj.view.updateOverlapState(obj.project.getOverlapState());
             catch err
                 obj.view.displayError(err.message);
             end
@@ -81,8 +83,10 @@ classdef VideoROI < handle
 
 
         function onOpenProject(obj, ~, projectDirectory)
+            obj.view.updateOverlapState(1);
             try
                 obj.project = VideoROIProject(projectDirectory);
+                obj.view.updateOverlapState(obj.project.getOverlapState());
                 obj.updateStimulusList();
                 obj.updateDatasetList();
             catch err
@@ -98,6 +102,13 @@ classdef VideoROI < handle
         end
 
 
+        function onToggleOverlap(obj, ~)
+            state = 1 - obj.project.getOverlapState();            
+            obj.project.setOverlapState(state);
+            obj.view.updateOverlapState(obj.project.getOverlapState());
+        end
+        
+        
         function onSetTask(obj, ~, taskName)
             if(~isa(obj.project, 'VideoROIProject'))
                 error('VideoROI:NoProject', 'Cannot set task, project not open');

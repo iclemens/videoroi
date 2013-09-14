@@ -20,6 +20,9 @@ classdef VideoROIView < EventProvider
         dataList;
         stimulusList;
         
+        % Whether overlap is allowed or not
+        overlapState;
+        
         % Current frame state
         frameIndex;
         frameROIState;
@@ -27,6 +30,9 @@ classdef VideoROIView < EventProvider
         
         % Menu containing available tasks
         taskMenu;
+        
+        % Toggle overlap menu item
+        overlapMenuItem;
         
         % True if the latest changes have not been saved
         unsavedFlag;
@@ -59,8 +65,8 @@ classdef VideoROIView < EventProvider
         % Constructor for the VideoROIView
         %
         function obj = VideoROIView()
-            obj.copyRectFromListColors()
-            
+            obj.overlapState = 1;
+            obj.copyRectFromListColors();            
             obj.setupGUI();                      
 
             obj.frameSlider.setValue(1);
@@ -183,8 +189,24 @@ classdef VideoROIView < EventProvider
                 obj.stimulusList.addItem(labels{i});
             end
         end
-                       
-        
+
+
+        %
+        % Update current overlap state.
+        %
+        % @param state Zero for disallowed, one for allowed
+        %        
+        function updateOverlapState(obj, state)
+            obj.overlapState = state;
+            
+            if obj.overlapState == 0
+                set(obj.overlapMenuItem, 'Label', 'Allow &overlap');
+            else
+                set(obj.overlapMenuItem, 'Label', 'Disallow &overlap');
+            end
+        end
+
+
         %
         % Updates all ROI rectangles in the current frame
         %
@@ -441,6 +463,10 @@ classdef VideoROIView < EventProvider
             h = uimenu('Label', '&Regions');
             uimenu(h, 'Label', '&Add ROI', 'Callback', @(src, x) obj.onAddButtonClicked(src));
             uimenu(h, 'Label', 'Force &Save', 'Callback', @(src, x) obj.onSave(src));
+            
+            obj.overlapMenuItem = ...
+                uimenu(h, 'Label', 'Disallow &overlap', 'Callback', @(src, x) obj.onToggleOverlap(src));
+            
             uimenu(h, 'Label', '&Import', 'Separator', 'on', 'Callback', @(src, x) obj.onImportROI(src));
             uimenu(h, 'Label', '&Export', 'Callback', @(src, x) obj.onExportROI(src));
             
@@ -710,6 +736,13 @@ classdef VideoROIView < EventProvider
         end
         
 
+        %
+        % Toggle whether overlap is allowed or not.
+        %
+        function onToggleOverlap(obj, ~)
+            obj.invokeEventListeners('toggleOverlap');
+        end
+        
         %
         % Function called when "import" has been selected. It shows
         % a file-selection dialog and will invoke a callback

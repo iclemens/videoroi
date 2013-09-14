@@ -18,6 +18,7 @@ classdef VideoROIProject < EventProvider
         projectDirectory = '';
         
         taskName = '';
+        overlapState = 1;
         
         version = 0;
         stimuli = struct('name', {}, 'frames', {}, 'width', {}, 'height', {}, 'filename', {});
@@ -38,7 +39,8 @@ classdef VideoROIProject < EventProvider
                          'and therefore not suitable to host a project.'], projectDirectory);
                 end
                 
-                obj.version = 2;
+                obj.version = 3;
+                obj.overlapState = 1;
                 obj.saveManifest(manifestFile);
                                 
                 mkdir(projectDirectory, 'stimuli');
@@ -48,12 +50,13 @@ classdef VideoROIProject < EventProvider
             obj.loadManifest(manifestFile);
             obj.projectDirectory = projectDirectory;
         end                           
-                             
+
                 
         function setTaskName(obj, taskName)
             % Changes the task associated with the given experiment
 
             obj.taskName = taskName;
+            obj.saveManifest();
         end
         
         
@@ -245,6 +248,35 @@ classdef VideoROIProject < EventProvider
             datasetDir = fullfile(obj.projectDirectory, 'datasets', info.name);
             info.resourcepath = datasetDir;                        
         end
+        
+        
+        %
+        % Returns whether or not overlap is currently allowed.
+        %
+        % @return Zero if not allowed, one otherwise.
+        %
+        function state = getOverlapState(obj)
+            state = obj.overlapState;
+        end
+        
+        
+        %
+        % Sets overlap state for current project. Note that the overlap state is enforced
+        % only by the ROI editor. Analysis tools may or may not choose to ignore this value.
+        %
+        % @param state Zero if not allowed, one otherwise
+        %
+        function setOverlapState(obj, state)
+            if state == 0
+                obj.overlapState = 0;
+                obj.saveManifest();
+            elseif state == 1
+                obj.overlapState = 1;
+                obj.saveManifest();
+            else
+                error('VideoROIProject:InvalidValue', 'Overlap state should be either 0 (disallowed) or 1 (allowed)');
+            end
+        end
     end
     
     methods(Access = private)
@@ -289,7 +321,7 @@ classdef VideoROIProject < EventProvider
                 % Attempt to add meta-data to stimulus structure
                 obj.updateAllMetadata();
                 
-                obj.saveManifest(manifestFile);                
+                obj.saveManifest(manifestFile);
                 close(h);
                 
                 % Attempt to read the file we have just saved
@@ -298,21 +330,27 @@ classdef VideoROIProject < EventProvider
                 return;
             end;
 
-            % Read latest version
-            if(manifest.version == 2)
+            % Handle versions 2 and 3
+            if(manifest.version == 2 || manifest.version == 3)
                 manifest.stimuli = sortstruct(manifest.stimuli, 'name');
                 manifest.datasets = sortstruct(manifest.datasets, 'name');           
-            
-                obj.version = manifest.version;
+
+                obj.version = 3;
                 obj.datasets = manifest.datasets;            
                 obj.stimuli = manifest.stimuli;
+                
+                if isfield(manifest, 'overlapState')
+                    obj.overlapState = manifest.overlapState;
+                else
+                    obj.overlapState = 1;
+                end
                 
                 if isfield(manifest, 'taskName')
                     obj.taskName = manifest.taskName;
                 end
                 
                 return;
-            end;
+            end            
             
             % None of the above handled the file, thus it is not supported
             error('VideoROI:VersionNotSupported', ...
@@ -332,8 +370,9 @@ classdef VideoROIProject < EventProvider
             stimuli = obj.stimuli;
             datasets = obj.datasets;
             taskName = obj.taskName;
+            overlapState = obj.overlapState;
             
-            save(manifestFile, 'version', 'stimuli', 'datasets', 'taskName');
+            save(manifestFile, 'version', 'stimuli', 'datasets', 'taskName', 'overlapState');
         end
 
         
