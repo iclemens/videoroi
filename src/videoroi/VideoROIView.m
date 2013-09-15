@@ -299,11 +299,10 @@ classdef VideoROIView < EventProvider
                 set(h, 'Ylim', newYLim);
             
                 % Update constraints on ROI rectangles
-                %numROIs = min(obj.engine.getNumberOfROIs(), length(obj.frameRect));
-                fcn = obj.makeConstraintFcn(); % makeConstrainToRectFcn('imrect', get(h, 'XLim'), get(h, 'YLim'));
                 numROIs = length(obj.frameRect);
                 for i = 1:numROIs
                     if(obj.frameRect{i} > 0)
+                        fcn = obj.makeConstraintFcn(i);
                         setPositionConstraintFcn(obj.frameRect{i}, fcn);
                     end
                 end
@@ -503,12 +502,12 @@ classdef VideoROIView < EventProvider
             % called again.
             xlim = get(get(obj.frameImage, 'Parent'), 'XLim') + [0.5 -0.5];
             ylim = get(get(obj.frameImage, 'Parent'), 'YLim') + [0.5 -0.5];
-                        
+
             function cpos = overlapConstraintFcn(pos)
                 % Contrain position to window
                 cpos = [NaN NaN NaN NaN];
                 cpos(1) = min(max(pos(1), xlim(1)), xlim(2) - 1);
-                cpos(2) = min(max(pos(2), xlim(1)), ylim(2) - 1);                
+                cpos(2) = min(max(pos(2), xlim(1)), ylim(2) - 1);
                 wlim = xlim(2) - cpos(1);
                 hlim = ylim(2) - cpos(2);                
                 cpos(3) = min(max(pos(3), 1), wlim);
@@ -517,8 +516,22 @@ classdef VideoROIView < EventProvider
                 % Overlap is allowed, we're done
                 if obj.overlapState == 1, return; end;
                 
-                % Overlap is not allowed, set additional constraints
-                % FIXME
+                % If ROI overlaps with others, disallow
+                numROIs = length(obj.frameRect);
+                original_pos = getPosition(obj.frameRect{roi});
+                for i = 1:numROIs
+                    if i == roi, continue; end;
+                    if obj.frameRect{i} == 0, continue; end; 
+                    friend_pos = getPosition(obj.frameRect{i});
+
+                    xoverlap = min( friend_pos(1) + friend_pos(3), cpos(1) + cpos(3) ) - max( friend_pos(1), cpos(1) );
+                    yoverlap = min( friend_pos(2) + friend_pos(4), cpos(2) + cpos(4) ) - max( friend_pos(2), cpos(2) );
+                    
+                    if (xoverlap * yoverlap) > 0
+                        cpos = original_pos;
+                        break;
+                    end
+                end               
             end
             
             fcn = @overlapConstraintFcn;
@@ -541,13 +554,12 @@ classdef VideoROIView < EventProvider
             xl = get(get(obj.frameImage, 'Parent'), 'XLim');
             yl = get(get(obj.frameImage, 'Parent'), 'YLim');
             
-            fcn = obj.makeConstraintFcn(); % makeConstrainToRectFcn('imrect', xl, yl);
+            fcn = obj.makeConstraintFcn(i);
             setPositionConstraintFcn(obj.frameRect{i}, fcn);            
             
             setColor(obj.frameRect{i}, obj.roiRectColors{i});
             obj.frameRectCallbackID{i} = addNewPositionCallback(obj.frameRect{i}, @(x) obj.onRectMoved(i));
-            
-        end            
+        end           
 
     
         %
