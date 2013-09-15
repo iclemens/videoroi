@@ -504,34 +504,60 @@ classdef VideoROIView < EventProvider
             ylim = get(get(obj.frameImage, 'Parent'), 'YLim') + [0.5 -0.5];
 
             function cpos = overlapConstraintFcn(pos)
-                % Contrain position to window
-                cpos = [NaN NaN NaN NaN];
-                cpos(1) = min(max(pos(1), xlim(1)), xlim(2) - 1);
-                cpos(2) = min(max(pos(2), xlim(1)), ylim(2) - 1);
-                wlim = xlim(2) - cpos(1);
-                hlim = ylim(2) - cpos(2);                
-                cpos(3) = min(max(pos(3), 1), wlim);
-                cpos(4) = min(max(pos(4), 1), hlim);
                 
-                % Overlap is allowed, we're done
-                if obj.overlapState == 1, return; end;
-                
-                % If ROI overlaps with others, disallow
-                numROIs = length(obj.frameRect);
-                original_pos = getPosition(obj.frameRect{roi});
-                for i = 1:numROIs
-                    if i == roi, continue; end;
-                    if obj.frameRect{i} == 0, continue; end; 
-                    friend_pos = getPosition(obj.frameRect{i});
+                xconstr = xlim;
+                yconstr = ylim;
 
-                    xoverlap = min( friend_pos(1) + friend_pos(3), cpos(1) + cpos(3) ) - max( friend_pos(1), cpos(1) );
-                    yoverlap = min( friend_pos(2) + friend_pos(4), cpos(2) + cpos(4) ) - max( friend_pos(2), cpos(2) );
-                    
-                    if (xoverlap * yoverlap) > 0
-                        cpos = original_pos;
-                        break;
+                % Update constraints based on other regions
+                %
+                % Given the original position, find the first X that is larger than 
+                % our Xr and the first X that is smaller than our Xl. These are then 
+                % the constraints.                
+                if obj.overlapState == 0
+                    original_pos = getPosition(obj.frameRect{roi});
+                
+                    numROIs = length(obj.frameRect);
+                    for i = 1:numROIs
+                        if roi == i || obj.frameRect{i} == 0, continue; end;
+                        other_pos = getPosition(obj.frameRect{i});
+                        
+                        xoverlap = min( other_pos(1) + other_pos(3), pos(1) + pos(3) ) - max( other_pos(1), pos(1) );
+                        yoverlap = min( other_pos(2) + other_pos(4), pos(2) + pos(4) ) - max( other_pos(2), pos(2) );
+                        
+                        xleft = other_pos(1) + other_pos(3);
+                        ytop = other_pos(2) + other_pos(4);
+                        
+                        xright = other_pos(1);
+                        ybottom = other_pos(2);
+
+                        
+                        if yoverlap > 0
+                            if xleft >= xconstr(1) && xleft <= original_pos(1)
+                                xconstr(1) = xleft;
+                            end
+                            
+                            if xright <= xconstr(2) && xright >= (original_pos(1) + original_pos(3))
+                                xconstr(2) = xright;
+                            end
+                        end
+                        
+                        if xoverlap > 0 
+                            if ytop >= yconstr(1) && ytop <= original_pos(2)
+                                yconstr(1) = ytop;
+                            end
+                            
+                            if ybottom <= yconstr(2) && ybottom >= (original_pos(2) + original_pos(4))
+                                yconstr(2) = ybottom;
+                            end
+                        end                        
                     end
-                end               
+                end                
+
+                % Contrain position
+                cpos(1) = min(max(pos(1), xconstr(1)), xconstr(2) - pos(3));
+                cpos(2) = min(max(pos(2), yconstr(1)), yconstr(2) - pos(4));                
+                
+                cpos(3:4) = pos(3: 4);                
             end
             
             fcn = @overlapConstraintFcn;
