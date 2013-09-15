@@ -509,10 +509,6 @@ classdef VideoROIView < EventProvider
                 yconstr = ylim;
 
                 % Update constraints based on other regions
-                %
-                % Given the original position, find the first X that is larger than 
-                % our Xr and the first X that is smaller than our Xl. These are then 
-                % the constraints.                
                 if obj.overlapState == 0
                     original_pos = getPosition(obj.frameRect{roi});
                 
