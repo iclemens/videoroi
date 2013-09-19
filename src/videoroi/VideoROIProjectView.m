@@ -49,10 +49,10 @@ classdef VideoROIProjectView < EventProvider
         % @param labels Cell array containing dataset names
         %
         function updateDatasetList(obj, labels)
-            obj.dataList.clear();
+            obj.datasetList.clear();
             
             for i = 1:length(labels)
-                obj.dataList.addItem(labels{i});
+                obj.datasetList.addItem(labels{i});
             end
         end
         
@@ -96,6 +96,7 @@ classdef VideoROIProjectView < EventProvider
         taskMenu;
         overlapMenuItem;
         
+        overlapState;
         currentProjectPath = '';
     end    
     

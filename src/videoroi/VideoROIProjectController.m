@@ -127,12 +127,11 @@ classdef VideoROIProjectController < handle
         %
         function updateDatasetList(obj)
             numDatasets = obj.project.getNumberOfDatasets;
-            labels = cell(1, numDatasets + 1);
-            labels{1} = 'No dataset';
+            labels = cell(1, numDatasets);
             
             for i = 1:numDatasets
                 datasetInfo = obj.project.getInfoForDataset(i);
-                labels{i + 1} = datasetInfo.name;
+                labels{i} = datasetInfo.name;
             end
             
             obj.view.updateDatasetList(labels);
