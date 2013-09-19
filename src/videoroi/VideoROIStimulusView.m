@@ -1,4 +1,4 @@
-classdef VideoROIView < EventProvider
+classdef VideoROIStimulusView < EventProvider
         
     properties(Access = private)
         % GUI Components

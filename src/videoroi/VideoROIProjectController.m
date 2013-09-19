@@ -1,0 +1,3 @@
+classdef VideoROIProjectController < handle
+    
+end
