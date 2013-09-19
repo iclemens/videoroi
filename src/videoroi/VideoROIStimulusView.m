@@ -64,7 +64,7 @@ classdef VideoROIStimulusView < EventProvider
         %
         % Constructor for the VideoROIView
         %
-        function obj = VideoROIView()
+        function obj = VideoROIStimulusView()
             obj.overlapState = 1;
             obj.copyRectFromListColors();            
             obj.setupGUI();                      
@@ -162,50 +162,6 @@ classdef VideoROIStimulusView < EventProvider
             end          
         end
 
-        
-        %
-        % Update list of datasets
-        %
-        % @param labels Cell array containing dataset names
-        %
-        function updateDatasetList(obj, labels)
-            obj.dataList.clear();
-            
-            for i = 1:length(labels)
-                obj.dataList.addItem(labels{i});
-            end
-        end
-        
-        
-        %
-        % Update list of stimuli
-        %
-        % @param labels Cell array containing stimulus names
-        %
-        function updateStimulusList(obj, labels)
-            obj.stimulusList.clear();
-            
-            for i = 1:length(labels)
-                obj.stimulusList.addItem(labels{i});
-            end
-        end
-
-
-        %
-        % Update current overlap state.
-        %
-        % @param state Zero for disallowed, one for allowed
-        %        
-        function updateOverlapState(obj, state)
-            obj.overlapState = state;
-            
-            if obj.overlapState == 0
-                set(obj.overlapMenuItem, 'Label', 'Allow &overlap');
-            else
-                set(obj.overlapMenuItem, 'Label', 'Disallow &overlap');
-            end
-        end
-        
 
         %
         % Updates all ROI rectangles in the current frame
@@ -257,17 +213,6 @@ classdef VideoROIStimulusView < EventProvider
                 end
             end
         end                
-
-
-        function updateTaskList(obj, taskList)
-            % Update list of available tasks as used by the view.
-            
-            % Fixme: Clear existing entries
-            
-            for t = 1:length(taskList)
-                uimenu(obj.taskMenu, 'Label', taskList(t).name, 'Callback', @(src, x) obj.onSetTask(taskList(t).name));
-            end
-        end
         
         
         %
@@ -386,11 +331,12 @@ classdef VideoROIStimulusView < EventProvider
         % Setup tab-panel
         %
         function tabPanel = setupTabPanel(obj)
-            tabPanel = GUITabPanel();
-            tab1 = tabPanel.addTab('ROIs');
-            tab1.addComponent(obj.setupStimulusPropertiesPane());
-            tab2 = tabPanel.addTab('Project');
-            tab2.addComponent(obj.setupProjectPane());
+            %tabPanel = GUITabPanel();
+            %tab1 = tabPanel.addTab('ROIs');
+            %tab1.addComponent(obj.setupStimulusPropertiesPane());
+            %tab2 = tabPanel.addTab('Project');
+            %tab2.addComponent(obj.setupProjectPane());
+            tabPanel = obj.setupStimulusPropertiesPane();
         end        
 
         
@@ -628,112 +574,6 @@ classdef VideoROIStimulusView < EventProvider
         
 
         %
-        % Function called when a project is to be created
-        %
-        function onNewProject(obj, ~)
-            projectDirectory = uigetdir ('', 'Choose project directory');
-            
-            if(projectDirectory ~= 0)
-                obj.invokeEventListeners('newProject', projectDirectory);
-                obj.currentProjectPath = projectDirectory;
-            end
-        end
-
-        
-        %
-        % Function called when a project is to be opened
-        %        
-        function onOpenProject(obj, ~)
-            projectDirectory = uigetdir('', 'Choose project directory');
-            
-            if(projectDirectory ~= 0)
-                obj.invokeEventListeners('openProject', projectDirectory);
-                obj.currentProjectPath = projectDirectory;
-            end
-        end
-        
-        
-        %
-        % Function called when a project is to be closed
-        %        
-        function onCloseProject(obj, ~)
-            obj.invokeEventListeners('closeProject');
-            obj.currentProjectPath = '';
-        end        
-        
-        
-        
-        function onSetTask(obj, taskName)
-            % Function to be called when a task is selected
-            
-            obj.invokeEventListeners('setTask', taskName);
-        end
-        
-        
-        %
-        % Function called when adding a stimulus to the project
-        %
-        function onAddStimulus(obj, ~)
-            if(obj.currentProjectPath ~= 0)
-                
-                fileTypes = {'*.wmv', 'Video files'; '*.jpg', 'Image files'};
-                
-                [filenames, pathname] = uigetfile( ...
-                    fileTypes, 'Add stimulus', ...
-                    'MultiSelect', 'On');
-                
-                % No file selected, return
-                if(~iscell(filenames))
-                    if(filenames == 0)
-                        return
-                    end
-                end;
-                
-                % If one file was selected, create a cell
-                if(~iscell(filenames))
-                    filenames = {filenames};
-                end
-                
-                h = waitbar(0, 'Adding stimuli');
-                
-                for i = 1:length(filenames)
-                    waitbar(i/length(filenames), h);
-                    try
-                        filename = fullfile(pathname, filenames{i});
-                        obj.invokeEventListeners('addStimulus', filename);
-                    catch e
-                        obj.displayError(['Could not import stimulus.' ...
-                            10 10 'Error: ' e.message]);
-                    end;
-                end
-                
-                close(h);
-            else
-                warndlg('No active project, unable to add stimulus.');
-            end
-        end
-
-
-        %
-        % Function called when a stimulus has been selected
-        %
-        function onStimulusClicked(obj, src)
-            if(obj.unsavedFlag)
-                choice = questdlg('Save changes before loading stimulus?', ...
-                    'Save changed', 'Yes', 'No', 'Yes');
-
-                if(strcmp(choice, 'Yes'))
-                    obj.invokeEventListeners('saveROIFile');
-                end
-            end
-            
-            index = src.getSelectedIndex();
-            obj.invokeEventListeners('changeStimulus', index);
-            obj.unsavedFlag = 0;
-        end
-
-
-        %
         % Function called when the window is being closed
         %
         function onClose(obj, ~)
@@ -746,52 +586,12 @@ classdef VideoROIStimulusView < EventProvider
                 end
             end
         end
-        
 
-        %
-        % Function called when adding a dataset to the project
-        %        
-        function onAddDataset(obj, ~)
-            if(obj.currentProjectPath ~= 0)                
-                [filenames, pathname] = uigetfile( ...
-                    {'*.txt', 'Datasets'}, 'Add dataset', ...
-                    'MultiSelect', 'On');
-                
-                % No file selected, return
-                if(~iscell(filenames))
-                    if(filenames == 0)
-                        return
-                    end
-                end;
-                
-                % If one file was selected, create a cell
-                if(~iscell(filenames))
-                    filenames = {filenames};
-                end
-
-                % Loop over all selected files and insert them
-                for i = 1:length(filenames)
-                    filename = fullfile(pathname, filenames{i});
-                    obj.invokeEventListeners('addDataset', filename);
-                end
-            else
-                warndlg('No active project, unable to add dataset');
-            end            
-        end
-        
-                 
+         
         function onPlayPauseButtonClicked(obj, ~)
             obj.invokeEventListeners('playPauseVideo');
         end                       
-        
-        %
-        % Function called when a dataset has been selected
-        %
-        function onDatasetClicked(obj, src)
-            index = src.getSelectedIndex();
-            obj.invokeEventListeners('changeDataset', index);
-        end
-        
+                
 
         %
         % Function called when "save" has been selected. If save
@@ -801,13 +601,6 @@ classdef VideoROIStimulusView < EventProvider
             obj.invokeEventListeners('saveROIFile');
         end
         
-
-        %
-        % Toggle whether overlap is allowed or not.
-        %
-        function onToggleOverlap(obj, ~)
-            obj.invokeEventListeners('toggleOverlap');
-        end
         
         %
         % Function called when "import" has been selected. It shows
@@ -863,15 +656,7 @@ classdef VideoROIStimulusView < EventProvider
                 obj.unsavedFlag = 1;
             end
         end
-
-        
-        function onPerformAnalysis(obj, ~)
-            filename = uiputfile('*.csv', 'Choose output location');            
-            if(isempty(filename)), return; end;            
-            
-            obj.invokeEventListeners('performAnalysis', filename);
-        end
-        
+                
 
         function onSceneCheckboxClicked(obj, ~)
             obj.invokeEventListeners('sceneChanged', obj.frameIndex, obj.sceneCheckbox.getValue());

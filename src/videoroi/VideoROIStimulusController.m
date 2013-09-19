@@ -24,7 +24,7 @@ classdef VideoROIStimulusController < handle
     end
     
     methods        
-        function obj = VideoROI()
+        function obj = VideoROIStimulusController()
             obj.playbackTimer = timer( ...
                 'BusyMode', 'drop', ...
                 'ExecutionMode', 'FixedSpacing', ...
@@ -32,10 +32,8 @@ classdef VideoROIStimulusController < handle
                 'Period', round((1/30)*1000)/1000, ...
                 'TimerFcn', @(src, tmp) obj.onTimerTick(src));                
             
-            obj.view = VideoROIView();
-            
-            obj.view.updateTaskList(VideoROITaskFactory.enumerateTasks());
-            
+            obj.view = VideoROIStimulusView();
+                        
             obj.regions = NaN;
 
             obj.view.addEventListener('toggleROI', @(src, index) obj.onToggleROI(src, index));
@@ -48,76 +46,13 @@ classdef VideoROIStimulusController < handle
             obj.view.addEventListener('importROIFile', @(src, filename) obj.onImportROIFile(src, filename));
             obj.view.addEventListener('exportROIFile', @(src, filename) obj.onExportROIFile(src, filename));            
             
-            obj.view.addEventListener('newProject', @(src, projectDirectory) obj.onNewProject(src, projectDirectory));
-            obj.view.addEventListener('openProject', @(src, projectDirectory) obj.onOpenProject(src, projectDirectory));
-            obj.view.addEventListener('closeProject', @(src) obj.onCloseProject(src));
-            
-            obj.view.addEventListener('addStimulus', @(src, filename) obj.onAddStimulus(src, filename));
-            obj.view.addEventListener('addDataset', @(src, filename) obj.onAddDataset(src, filename));
-
-            obj.view.addEventListener('changeStimulus', @(src, index) obj.onChangeStimulus(src, index));
-            obj.view.addEventListener('changeDataset', @(src, index) obj.onChangeDataset(src, index));
+            %obj.view.addEventListener('changeStimulus', @(src, index) obj.onChangeStimulus(src, index));
+            %obj.view.addEventListener('changeDataset', @(src, index) obj.onChangeDataset(src, index));
             
             obj.view.addEventListener('playPauseVideo', @(src) obj.onPlayPauseVideo(src));
-            
-            obj.view.addEventListener('setTask', @(src, taskName) obj.onSetTask(src, taskName));
-            obj.view.addEventListener('toggleOverlap', @(src) obj.onToggleOverlap(src));
-            
-            obj.view.addEventListener('performAnalysis', @(src, filename) obj.onPerformAnalysis(src, filename));
         end
 
         
-        %%%%%%%%%%%%%%%%%%%%%%
-        % PROJECT MANAGEMENT %
-        %%%%%%%%%%%%%%%%%%%%%%
-
-        
-        function onNewProject(obj, ~, projectDirectory)            
-            try
-                obj.project = VideoROIProject(projectDirectory);
-                obj.view.updateOverlapState(obj.project.getOverlapState());
-            catch err
-                obj.view.displayError(err.message);
-            end
-        end
-
-
-        function onOpenProject(obj, ~, projectDirectory)
-            obj.view.updateOverlapState(1);
-            try
-                obj.project = VideoROIProject(projectDirectory);
-                obj.view.updateOverlapState(obj.project.getOverlapState());
-                obj.updateStimulusList();
-                obj.updateDatasetList();
-            catch err
-                obj.view.displayError(err.message);
-            end
-        end
-
-
-        function onCloseProject(obj, ~)            
-            obj.project = [];
-            obj.view.updateStimulusList({});
-            obj.view.updateDatasetList({});            
-        end
-
-
-        function onToggleOverlap(obj, ~)
-            state = 1 - obj.project.getOverlapState();            
-            obj.project.setOverlapState(state);
-            obj.view.updateOverlapState(obj.project.getOverlapState());
-        end
-        
-        
-        function onSetTask(obj, ~, taskName)
-            if(~isa(obj.project, 'VideoROIProject'))
-                error('VideoROI:NoProject', 'Cannot set task, project not open');
-            end
-            
-            obj.project.setTaskName(taskName);
-            
-            % Fixme: should reload dataset
-        end
         
         
         function updateROIList(obj)
@@ -160,31 +95,7 @@ classdef VideoROIStimulusController < handle
         end
         
 
-        function updateDatasetList(obj)
-            numDatasets = obj.project.getNumberOfDatasets;
-            labels = cell(1, numDatasets + 1);
-            labels{1} = 'No dataset';
-            
-            for i = 1:numDatasets
-                datasetInfo = obj.project.getInfoForDataset(i);
-                labels{i + 1} = datasetInfo.name;
-            end
-            
-            obj.view.updateDatasetList(labels);
-        end
 
-
-        function updateStimulusList(obj)
-            numStimuli = obj.project.getNumberOfStimuli;
-            labels = cell(1, numStimuli);
-            
-            for i = 1:numStimuli
-                stimInfo = obj.project.getInfoForStimulus(i);
-                labels{i} = stimInfo.name;
-            end
-            
-            obj.view.updateStimulusList(labels);
-        end
         
 
         %%%%%%%%%%%%
