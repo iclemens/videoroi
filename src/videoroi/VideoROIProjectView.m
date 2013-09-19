@@ -96,6 +96,7 @@ classdef VideoROIProjectView < EventProvider
         taskMenu;
         overlapMenuItem;
         
+        unsavedFlag;
         overlapState;
         currentProjectPath = '';
     end    
@@ -122,7 +123,7 @@ classdef VideoROIProjectView < EventProvider
             buttonAddStimulus = GUIButton('Add stimulus...');
             buttonAddStimulus.addEventListener('click', @(src) obj.onAddStimulus(src));
             buttonEditRegions = GUIButton('Edit regions...');
-            buttonEditRegions.addEventListener('click', @(src) obj.onOpenStimulus(src));            
+            buttonEditRegions.addEventListener('click', @(src) obj.onOpenStimulus(obj.stimulusList));            
 
             buttons = GUIBoxArray();
             buttons.setMargin([0 0 0 0]);
@@ -144,7 +145,7 @@ classdef VideoROIProjectView < EventProvider
             buttonAddDataset = GUIButton('Add dataset...');
             buttonAddDataset.addEventListener('click', @(src) obj.onAddDataset(src));
             buttonViewDataset = GUIButton('View dataset...');
-            buttonViewDataset.addEventListener('click', @(src) obj.onOpenDataset(src));            
+            buttonViewDataset.addEventListener('click', @(src) obj.onOpenDataset(obj.datasetList));            
             
             buttons = GUIBoxArray();
             buttons.setMargin([0 0 0 0]);
