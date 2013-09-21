@@ -4,9 +4,11 @@ classdef VideoROIDatasetController < handle
             obj.project = project;
             obj.dataset = dataset;
             
-            resolution = obj.dataset.getScreenResolution();
-            
-            obj.view = VideoROIDatasetView(resolution);
+            obj.view = VideoROIDatasetView();
+            obj.view.setResolution(obj.dataset.getScreenResolution());
+            obj.view.setNumberOfTrials(obj.dataset.getNumberOfTrials());
+                        
+            obj.view.addEventListener('changeTrial', @(src, value) obj.onChangeTrial(src, value));
         end
     end
 
@@ -21,5 +23,8 @@ classdef VideoROIDatasetController < handle
     end
 
     methods(Access = private)
+        function onChangeTrial(obj, ~, value)
+            obj.view.setCurrentTrial(value);
+        end
     end
 end

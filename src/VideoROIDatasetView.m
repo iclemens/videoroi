@@ -35,9 +35,48 @@ classdef VideoROIDatasetView < EventProvider
 %
  
     methods(Access = public)
-        function obj = VideoROIDatasetView(resolution)
-            obj.screenResolution = resolution;
+        function obj = VideoROIDatasetView()
+            obj.screenResolution = [1024 768];
             obj.setupGui();
+        end
+
+
+        %
+        % Sets resolution of screen.
+        %
+        function setResolution(obj, screenResolution)
+            obj.screenResolution = screenResolution;
+            
+            I = ones(obj.screenResolution(1), obj.screenResolution(2), 3);
+            set(obj.screenImage, 'CData', I);
+            set(obj.screenImage, 'XData', [1 obj.screenResolution(2)]);
+            set(obj.screenImage, 'XData', [1 obj.screenResolution(1)]);
+        end
+
+
+        %
+        % Sets the number of the trial currently displayed.
+        %
+        function setCurrentTrial(obj, currentTrial)
+            if obj.currentTrial ~= currentTrial
+                obj.currentTrial = currentTrial;
+                
+                if obj.trialSlider.getValue() ~= currentTrial
+                    obj.trialSlider.setValue(currentTrial)
+                end
+            end
+            
+            obj.updateLabels();
+        end
+
+
+        %
+        % Set the total number of available trials.
+        %
+        function setNumberOfTrials(obj, numberOfTrials)
+            obj.numberOfTrials = numberOfTrials;
+            obj.trialSlider.setBounds(1, obj.numberOfTrials);
+            obj.updateLabels();
         end
     end
 
@@ -51,7 +90,10 @@ classdef VideoROIDatasetView < EventProvider
         
         % Used to draw eye trace
         traceAxes = [];
-        %trace
+
+        % Trial counts
+        currentTrial = NaN;
+        numberOfTrials = 1;        
         
         % Scrollbar used to control time and trial
         trialSlider = [];
@@ -79,7 +121,7 @@ classdef VideoROIDatasetView < EventProvider
             obj.timeSlider = GUISlider();   % FIXME: Frames or seconds?!
             obj.timeSlider.addEventListener('change', @(x) obj.onTimeSliderChanged(x));
             obj.trialSlider = GUISlider();
-            obj.trialSlider.addEventListener('change', @(x) obj.onTrialSliderChanged(x));
+            obj.trialSlider.addEventListener('change', @(src) obj.onTrialSliderChanged(src));
             
             obj.playPauseButton = GUIButton();
             obj.playPauseButton.addEventListener('click', @(src) obj.onPlayPauseButtonClicked(src));
@@ -87,7 +129,7 @@ classdef VideoROIDatasetView < EventProvider
            
             controlbar = GUIBoxArray();
             controlbar.setMargin([0 0 0 0]);
-            controlbar.setHorizontalDistribution([NaN 25 25 25]);
+            controlbar.setHorizontalDistribution([NaN NaN 25]);
             controlbar.addComponent(obj.timeSlider);
             controlbar.addComponent(obj.trialSlider);
             controlbar.addComponent(obj.playPauseButton);
@@ -116,6 +158,16 @@ classdef VideoROIDatasetView < EventProvider
             mainWindow.addComponent(verticalSplit);
         end
         
+        
+        %
+        % Update labels
+        %
+        function updateLabels(obj)
+            obj.timeLabel.setLabel(sprintf( ...
+                'Time %.2f of %.2f sec / Trial %d of %d', ...
+                0, 0, obj.currentTrial, obj.numberOfTrials));
+        end
+        
 
         %
         % Create a new image to show in the screen axes.
@@ -135,11 +187,16 @@ classdef VideoROIDatasetView < EventProvider
         % Setup trace axes.
         %
         function onTraceAxesCreated(~, src)
-            h = src.getHandle();            
-            t = linspace(0, 10, 20);            
+            h = src.getHandle();
+            t = linspace(0, 10, 20);
             plot(h, t, sin(t));
         end
         
+        
+        function onTrialSliderChanged(obj, src)
+            value = round(src.getValue());
+            obj.invokeEventListeners('changeTrial', value);
+        end
         
         function onTimeSliderChanged(~, ~)
         end
