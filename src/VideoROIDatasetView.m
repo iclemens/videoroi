@@ -26,7 +26,8 @@ classdef VideoROIDatasetView < EventProvider
 %
  
     methods(Access = public)
-        function obj = VideoROIDatasetView()
+        function obj = VideoROIDatasetView(resolution)
+            obj.screenResolution = resolution;
             obj.setupGui();
         end
     end
@@ -35,9 +36,16 @@ classdef VideoROIDatasetView < EventProvider
         datasetName = 'Unknown';
         
         % Represents the virtual screen (i.e. what the participant saw)
+        screenResolution = [];
         screenAxes = [];
+        screenImage = [];
         
-        % Scrollbar used to control time
+        % Used to draw eye trace
+        traceAxes = [];
+        %trace
+        
+        % Scrollbar used to control time and trial
+        trialSlider = [];
         timeSlider = [];
         timeLabel = [];
         
@@ -51,11 +59,18 @@ classdef VideoROIDatasetView < EventProvider
         %
         function setupGui(obj)
             obj.screenAxes = GUIAxes();
+            obj.screenAxes.setMargin([0 0 0 0]);
             obj.screenAxes.addEventListener('construction', @(src) obj.onScreenAxesCreated(src));
 
+            obj.traceAxes = GUIAxes();
+            obj.traceAxes.setMargin([0 0 0 0]);
+            obj.traceAxes.addEventListener('construction', @(src) obj.onTraceAxesCreated(src));
+            
             % Time control components
-            obj.timeSlider = GUISlider();
+            obj.timeSlider = GUISlider();   % FIXME: Frames or seconds?!
             obj.timeSlider.addEventListener('change', @(x) obj.onTimeSliderChanged(x));
+            obj.trialSlider = GUISlider();
+            obj.trialSlider.addEventListener('change', @(x) obj.onTrialSliderChanged(x));
             
             obj.playPauseButton = GUIButton();
             obj.playPauseButton.addEventListener('click', @(src) obj.onPlayPauseButtonClicked(src));
@@ -63,11 +78,12 @@ classdef VideoROIDatasetView < EventProvider
            
             controlbar = GUIBoxArray();
             controlbar.setMargin([0 0 0 0]);
-            controlbar.setHorizontalDistribution([NaN 25 25]);
-            controlbar.addComponent(obj.timeSlider)            
+            controlbar.setHorizontalDistribution([NaN 25 25 25]);
+            controlbar.addComponent(obj.timeSlider);
+            controlbar.addComponent(obj.trialSlider);
             controlbar.addComponent(obj.playPauseButton);
 
-            obj.timeLabel = GUILabel('Time x of y');
+            obj.timeLabel = GUILabel('Time {} of {}sec / Trial {} of {}');
 
             horizontalSplit = GUIBoxArray();
             horizontalSplit.setHorizontalDistribution([NaN 150]);            
@@ -76,8 +92,10 @@ classdef VideoROIDatasetView < EventProvider
 
             % Put all components together
             verticalSplit = GUIBoxArray();
-            verticalSplit.setVerticalDistribution([NaN 25 25]);
+            verticalSplit.setMargin([0 0 0 0]);
+            verticalSplit.setVerticalDistribution([NaN 200 25 25]);
             verticalSplit.addComponent(horizontalSplit);
+            verticalSplit.addComponent(obj.traceAxes);
             verticalSplit.addComponent(obj.timeLabel);
             verticalSplit.addComponent(controlbar);
 
@@ -90,8 +108,28 @@ classdef VideoROIDatasetView < EventProvider
             
         end
         
-        
-        function onScreenAxesCreated(~, ~)
+
+        %
+        % Create a new image to show in the screen axes.
+        %
+        function onScreenAxesCreated(obj, src)
+            h = src.getHandle();
+
+            I = ones(obj.screenResolution(1), obj.screenResolution(2), 3);
+            obj.screenImage = image(I, 'Parent', h);
+
+            set(h, 'XTick', []);
+            set(h, 'YTick', []);            
+        end
+
+
+        %
+        % Setup trace axes.
+        %
+        function onTraceAxesCreated(~, src)
+            h = src.getHandle();            
+            t = linspace(0, 10, 20);            
+            plot(h, t, sin(t));
         end
         
         

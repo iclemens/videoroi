@@ -4,7 +4,9 @@ classdef VideoROIDatasetController < handle
             obj.project = project;
             obj.dataset = dataset;
             
-            obj.view = VideoROIDatasetView();
+            resolution = obj.dataset.getScreenResolution();
+            
+            obj.view = VideoROIDatasetView(resolution);
         end
     end
 

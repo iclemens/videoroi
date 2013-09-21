@@ -37,11 +37,22 @@ classdef VideoROIDataset < handle
             obj.defineScreen(scr);
         end
         
-      
-        function ppd = pixelsPerDegree(obj)
+
+        %
+        % Returns the number of pixels per degree (for centre of screen).
+        %
+        function ppd = getPixelsPerDegree(obj)
             lengthperdeg = tan(degtorad(1)) * obj.screen.distance;
             ppd = lengthperdeg / obj.screen.dimensions(1) * obj.screen.resolution(1);
-        end        
+        end
+        
+        
+        %
+        % Returns screen resolution.
+        %
+        function resolution = getScreenResolution(obj)
+            resolution = obj.screen.resolution;
+        end
         
         
         function defineScreen(obj, screen)
