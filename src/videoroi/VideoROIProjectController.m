@@ -12,6 +12,9 @@ classdef VideoROIProjectController < handle
             obj.view.addEventListener('addStimulus', @(src, filename) obj.onAddStimulus(src, filename));
             obj.view.addEventListener('addDataset', @(src, filename) obj.onAddDataset(src, filename));
 
+            obj.view.addEventListener('openStimulus', @(src, index) obj.onOpenStimulus(src, index));
+            obj.view.addEventListener('openDataset', @(src, index) obj.onOpenDataset(src, index));
+
             obj.view.addEventListener('setTask', @(src, taskName) obj.onSetTask(src, taskName));
             obj.view.addEventListener('toggleOverlap', @(src) obj.onToggleOverlap(src));
             
@@ -121,7 +124,64 @@ classdef VideoROIProjectController < handle
     end
 
     
-    methods(Access = private)
+    methods(Access = private)            
+        %
+        % Add dataset to project.
+        %
+        function onAddDataset(obj, ~, filename)
+            if(~isempty(obj.project))
+                try
+                    obj.project.addDataset(filename);
+                    obj.updateDatasetList();
+                catch err
+                    obj.view.displayError(err.message);                    
+                end
+            else
+                error('VideoROI:NoProjectLoaded', 'No project loaded, unable to add dataset');
+            end            
+        end
+
+
+        %
+        % Add stimulus to project.
+        %
+        function onAddStimulus(obj, ~, filename)
+            if(~isempty(obj.project))
+                try
+                    obj.project.addStimulus(filename);
+                    obj.updateStimulusList();
+                catch err
+                    obj.view.displayError(err.message);
+                end
+            else
+                error('VideoROI:NoProjectLoaded', 'No project loaded, unable to add stimulus');
+            end
+        end
+        
+        
+        %
+        % Open eye-trace view.
+        %
+        function onOpenDataset(obj, ~, index)
+            datasetInfo = obj.project.getInfoForDataset(index);
+            
+            if ~isstruct(datasetInfo)
+                obj.view.displayError('Selected dataset is corrupt.');
+                return;
+            end
+            
+            dataset = VideoROIDataset(datasetInfo, obj.project.getTaskName());            
+            VideoROIDatasetController(obj.project, dataset);
+        end
+        
+        
+        %
+        % Open stimulus and region view.
+        %
+        function onOpenStimulus(obj, ~, index)
+        end
+
+
         %
         % Update list of datasets.
         %

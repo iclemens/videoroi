@@ -67,32 +67,6 @@ classdef VideoROIStimulusController < handle
         end
 
 
-        function onAddDataset(obj, ~, filename)
-            if(~isempty(obj.project))
-                try
-                    obj.project.addDataset(filename);
-                    obj.updateDatasetList();
-                catch err
-                    obj.view.displayError(err.message);                    
-                end
-            else
-                error('VideoROI:NoProjectLoaded', 'No project loaded, unable to add dataset');
-            end            
-        end
-
-
-        function onAddStimulus(obj, ~, filename)
-            if(~isempty(obj.project))
-                try
-                    obj.project.addStimulus(filename);
-                    obj.updateStimulusList();
-                catch err
-                    obj.view.displayError(err.message);
-                end
-            else
-                error('VideoROI:NoProjectLoaded', 'No project loaded, unable to add stimulus');
-            end
-        end
         
 
 

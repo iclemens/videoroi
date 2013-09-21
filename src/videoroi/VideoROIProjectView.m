@@ -108,6 +108,7 @@ classdef VideoROIProjectView < EventProvider
         %
         function setupGUI(obj)
             obj.mainWindow = GUIWindow();
+            obj.mainWindow.setTitle('VideoROI Project');
 
             horizontalSplit = GUIBoxArray();
             horizontalSplit.setHorizontalDistribution([NaN NaN]);
