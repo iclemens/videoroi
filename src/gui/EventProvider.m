@@ -17,7 +17,15 @@ classdef EventProvider < handle
             if(isempty(idx)), return; end;
             
             for i = 1:length(obj.eventHandlers{idx})
-                obj.eventHandlers{idx}{i}(obj, varargin{:});
+                try
+                    obj.eventHandlers{idx}{i}(obj, varargin{:});
+                catch err
+                    if strcmp(err.identifier, 'MATLAB:dispatcher:UnableToResolveHiddenFunction')
+                        warning(err.identifier, err.message);
+                    else
+                        rethrow(err);
+                    end
+                end
             end
         end        
     end
