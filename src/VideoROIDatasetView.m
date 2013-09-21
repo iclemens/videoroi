@@ -23,6 +23,15 @@ classdef VideoROIDatasetView < EventProvider
 %  | Trials                        |
 %  *-------------------------------*
 %
+% All data for the entire trial will be loaded, but the
+% XLimits will only contain 50ms (about 3 frames).
+% The image will show the frame corresponding to the first
+% sample shown in the eye-trace.
+%
+% It should be possible to scroll to the last sample! That
+% means almost the entire trace window will be blank.
+%
+% The slider will jump to the first sample of the frame.
 %
  
     methods(Access = public)
@@ -105,7 +114,6 @@ classdef VideoROIDatasetView < EventProvider
             mainWindow.addEventListener('keyPress', @(src, event) obj.onKeyPress(src, event));
             mainWindow.addEventListener('close', @(src) obj.onClose(src));
             mainWindow.addComponent(verticalSplit);
-            
         end
         
 
