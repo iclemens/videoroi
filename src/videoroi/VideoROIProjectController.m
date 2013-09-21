@@ -101,7 +101,7 @@ classdef VideoROIProjectController < handle
             obj.project.setTaskName(taskName);
             
             % Fixme: should inform open datasets they should reload.
-        end        
+        end
     end
 
     

@@ -344,20 +344,6 @@ classdef VideoROIStimulusController < handle
         end
 
         
-        %%%%%%%%%%%%%%%%%%
-        % Automation API %
-        %%%%%%%%%%%%%%%%%%
-
-        
-        function openProject(obj, projectDir)
-            obj.onOpenProject([], projectDir);
-            obj.view.setProjectDirectory(projectDir);
-        end        
-
-        
-        function addROI(obj, name, startFrame)            
-            obj.onNewROI(0, name, startFrame);
-        end        
         
     end
 end
