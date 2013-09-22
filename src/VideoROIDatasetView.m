@@ -199,7 +199,7 @@ classdef VideoROIDatasetView < EventProvider
         function updateLabels(obj)
             obj.timeLabel.setLabel(sprintf( ...
                 'Time %.2f of %.2f sec / Trial %d of %d', ...
-                obj.currentTime, obj.totalTime, obj.currentTrial, obj.numberOfTrials));
+                obj.currentTime * 1e-3, obj.totalTime * 1e-3, obj.currentTrial, obj.numberOfTrials));
         end
         
 
@@ -222,9 +222,12 @@ classdef VideoROIDatasetView < EventProvider
         %
         function onTraceAxesCreated(~, src)
             h = src.getHandle();
-            
+
             xlim(h, [0 500]);
-            hold(h, 'on');            
+            hold(h, 'on');
+
+            xlabel(h, 'Time (ms)');
+            ylabel(h, 'Position (pixels)');
         end
         
         
