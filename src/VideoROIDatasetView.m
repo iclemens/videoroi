@@ -53,6 +53,21 @@ classdef VideoROIDatasetView < EventProvider
             set(obj.screenImage, 'XData', [1 obj.screenResolution(2)]);
             set(obj.screenImage, 'XData', [1 obj.screenResolution(1)]);
         end
+        
+        
+        %
+        % Set total time.
+        %
+        function setTotalTime(obj, totalTime)
+            obj.totalTime = totalTime * 1e-3;
+            
+            if obj.currentTime > obj.totalTime
+                obj.timeSlider.setValue(obj.totalTime);
+            end
+            
+            obj.timeSlider.setBounds(0, obj.totalTime);
+            obj.updateLabels();
+        end
 
 
         %
@@ -92,8 +107,6 @@ classdef VideoROIDatasetView < EventProvider
             time = (time - time(1)) * 1e-3; % Microsecond to milliseconds
             plot(h, time, position(:, 1) - nanmean(position(:, 1)), 'b');
             plot(h, time, position(:, 2) - nanmean(position(:, 2)), 'r');
-            
-            time(end)
         end
     end
 
@@ -110,7 +123,11 @@ classdef VideoROIDatasetView < EventProvider
 
         % Trial counts
         currentTrial = NaN;
-        numberOfTrials = 1;        
+        numberOfTrials = 1;
+        
+        % Time info
+        currentTime = NaN;
+        totalTime = NaN;
         
         % Scrollbar used to control time and trial
         trialSlider = [];
@@ -146,8 +163,7 @@ classdef VideoROIDatasetView < EventProvider
            
             controlbar = GUIBoxArray();
             controlbar.setMargin([0 0 0 0]);
-            controlbar.setHorizontalDistribution([NaN NaN 25]);
-            controlbar.addComponent(obj.timeSlider);
+            controlbar.setHorizontalDistribution([NaN 25]);
             controlbar.addComponent(obj.trialSlider);
             controlbar.addComponent(obj.playPauseButton);
 
@@ -160,12 +176,13 @@ classdef VideoROIDatasetView < EventProvider
 
             % Put all components together
             verticalSplit = GUIBoxArray();
-            verticalSplit.setMargin([0 0 0 0]);
-            verticalSplit.setVerticalDistribution([NaN 200 25 25]);
-            verticalSplit.addComponent(horizontalSplit);
+            %verticalSplit.setMargin([0 0 0 0]);
+            verticalSplit.setVerticalDistribution([NaN 200 25 25 25]);
+            verticalSplit.addComponent(horizontalSplit);            
             verticalSplit.addComponent(obj.traceAxes);
-            verticalSplit.addComponent(obj.timeLabel);
+            verticalSplit.addComponent(obj.timeSlider);            
             verticalSplit.addComponent(controlbar);
+            verticalSplit.addComponent(obj.timeLabel);
 
             mainWindow = GUIWindow();
             mainWindow.setTitle( sprintf('Dataset: %s', obj.datasetName) );
@@ -182,7 +199,7 @@ classdef VideoROIDatasetView < EventProvider
         function updateLabels(obj)
             obj.timeLabel.setLabel(sprintf( ...
                 'Time %.2f of %.2f sec / Trial %d of %d', ...
-                0, 0, obj.currentTrial, obj.numberOfTrials));
+                obj.currentTime, obj.totalTime, obj.currentTrial, obj.numberOfTrials));
         end
         
 
@@ -205,10 +222,9 @@ classdef VideoROIDatasetView < EventProvider
         %
         function onTraceAxesCreated(~, src)
             h = src.getHandle();
+            
             xlim(h, [0 500]);
-            hold(h, 'on');
-            t = linspace(0, 10, 20);
-            plot(h, t, sin(t));
+            hold(h, 'on');            
         end
         
         
@@ -216,11 +232,17 @@ classdef VideoROIDatasetView < EventProvider
             value = round(src.getValue());
             obj.invokeEventListeners('changeTrial', value);
         end
+
         
-        function onTimeSliderChanged(~, ~)
+        function onTimeSliderChanged(obj, src)
+            value = src.getValue();
+            obj.currentTime = value;
+            
+            h = obj.traceAxes.getHandle();
+            xlim(h, value + [0 500]);
         end
-        
-        
+
+
         function onPlayPauseButtonClicked(~, ~)
         end
         

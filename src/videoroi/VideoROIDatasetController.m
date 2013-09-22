@@ -37,6 +37,8 @@ classdef VideoROIDatasetController < handle
             obj.view.updateTrace( ...
                 samples(:, col_time), ...
                 samples(:, [col_x col_y]));
+                        
+            obj.view.setTotalTime(diff(samples([1 end], col_time)));
         end
     end
 end
