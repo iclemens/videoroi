@@ -33,7 +33,8 @@ classdef VideoROIDatasetView < EventProvider
 %
 % The slider will jump to the first sample of the frame.
 %
- 
+%
+
     methods(Access = public)
         function obj = VideoROIDatasetView()
             obj.screenResolution = [1024 768];
