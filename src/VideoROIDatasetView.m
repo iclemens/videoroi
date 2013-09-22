@@ -24,7 +24,7 @@ classdef VideoROIDatasetView < EventProvider
 %  *-------------------------------*
 %
 % All data for the entire trial will be loaded, but the
-% XLimits will only contain 50ms (about 3 frames).
+% XLimits will only contain 500ms.
 % The image will show the frame corresponding to the first
 % sample shown in the eye-trace.
 %
@@ -78,6 +78,22 @@ classdef VideoROIDatasetView < EventProvider
             obj.numberOfTrials = numberOfTrials;
             obj.trialSlider.setBounds(1, obj.numberOfTrials);
             obj.updateLabels();
+        end
+
+
+        function updateTrace(obj, time, position)
+            h = obj.traceAxes.getHandle();
+
+            child = get(h, 'Children');            
+            for i = 1:numel(child)
+                delete(child(i));
+            end
+
+            time = (time - time(1)) * 1e-3; % Microsecond to milliseconds
+            plot(h, time, position(:, 1) - nanmean(position(:, 1)), 'b');
+            plot(h, time, position(:, 2) - nanmean(position(:, 2)), 'r');
+            
+            time(end)
         end
     end
 
@@ -189,6 +205,8 @@ classdef VideoROIDatasetView < EventProvider
         %
         function onTraceAxesCreated(~, src)
             h = src.getHandle();
+            xlim(h, [0 500]);
+            hold(h, 'on');
             t = linspace(0, 10, 20);
             plot(h, t, sin(t));
         end
