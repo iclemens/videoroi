@@ -104,7 +104,8 @@ classdef VideoROIDatasetView < EventProvider
                 delete(child(i));
             end
 
-            time = (time - time(1)) * 1e-3; % Microsecond to milliseconds
+            obj.offsetTime = time(1) * 1e-3;
+            time = time * 1e-3 - obj.offsetTime;
             plot(h, time, position(:, 1) - nanmean(position(:, 1)), 'b');
             plot(h, time, position(:, 2) - nanmean(position(:, 2)), 'r');
         end
@@ -126,6 +127,7 @@ classdef VideoROIDatasetView < EventProvider
         numberOfTrials = 1;
         
         % Time info
+        offsetTime = 0;
         currentTime = NaN;
         totalTime = NaN;
         
@@ -243,6 +245,8 @@ classdef VideoROIDatasetView < EventProvider
             
             h = obj.traceAxes.getHandle();
             xlim(h, value + [0 500]);
+            
+            obj.invokeEventListeners('changeTime', (obj.offsetTime + value) * 1e3);
         end
 
 

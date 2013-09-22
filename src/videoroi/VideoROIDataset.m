@@ -104,6 +104,19 @@ classdef VideoROIDataset < handle
             stimuli = obj.data(trialId).stimulus;
         end
         
+
+        %
+        % Returns the stimuli being presented at a given point in time.
+        %
+        function stimuli = getStimuliAtTime(obj, trialId, time)
+            col_time = strcmp(obj.header.Columns, 'Time');            
+            [~, sample] = min(abs(obj.data(trialId).samples(:, col_time) - time));
+            
+            stimuli = obj.data(trialId).stimulus( ...
+                [obj.data(trialId).stimulus.onset] <= sample & ...
+                [obj.data(trialId).stimulus.offset] >= sample);
+        end
+        
         
         function [samples, columns] = getAnnotationsForTrial(obj, trialId, units)
             if nargin < 3

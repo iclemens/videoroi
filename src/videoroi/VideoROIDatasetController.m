@@ -9,6 +9,7 @@ classdef VideoROIDatasetController < handle
             obj.view.setNumberOfTrials(obj.dataset.getNumberOfTrials());
 
             obj.view.addEventListener('changeTrial', @(src, value) obj.onChangeTrial(src, value));
+            obj.view.addEventListener('changeTime', @(src, value) obj.onChangeTime(src, value));
             
             obj.onChangeTrial([], 1);
         end
@@ -21,24 +22,35 @@ classdef VideoROIDatasetController < handle
         project = [];
         
         % Dataset to display
-        dataset = [];        
+        dataset = [];
+        
+        currentTrial;
     end
 
     methods(Access = private)
-
         function onChangeTrial(obj, ~, trialId)
-            obj.view.setCurrentTrial(trialId);            
-            [samples, columns] = obj.dataset.getAnnotationsForTrial(trialId, 'pixels');
+            obj.currentTrial = trialId;
+            obj.view.setCurrentTrial(obj.currentTrial);
+            [samples, columns] = obj.dataset.getAnnotationsForTrial(obj.currentTrial, 'pixels');
 
             col_time = find(strcmp(columns, 'Time'));
             col_x = find(strcmp(columns, 'R POR X [px]'));
             col_y = find(strcmp(columns, 'R POR Y [px]'));
-            
+
             obj.view.updateTrace( ...
                 samples(:, col_time), ...
                 samples(:, [col_x col_y]));
-                        
+
             obj.view.setTotalTime(diff(samples([1 end], col_time)));
+        end
+
+
+        function onChangeTime(obj, ~, time)
+            % Determine which frame / stimulus to display
+            % Use the task compositor to do this?
+            time
+            stimuli = obj.dataset.getStimuliAtTime(obj.currentTrial, time);
+            stimuli
         end
     end
 end
