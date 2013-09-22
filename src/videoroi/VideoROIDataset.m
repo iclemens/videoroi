@@ -55,23 +55,28 @@ classdef VideoROIDataset < handle
         end
         
         
+        %
+        % Set screen properties for calibration
+        %
         function defineScreen(obj, screen)
-            % Set screen properties for calibration
-            
             obj.screen = screen;
             obj.updateGazeCoordinates();
             obj.annotateTrace();
         end
-        
-        
+
+
+        %
+        % Return number of trials
+        %
         function count = getNumberOfTrials(obj)
             count = length(obj.data);
         end
-        
-        
-        function list = getTrialsWithStimulus(obj, stimulusName)
-            % List the trials in which a given stimulus is presented
-            
+
+
+        %
+        % List the trials in which a given stimulus is presented
+        %
+        function list = getTrialsWithStimulus(obj, stimulusName)            
             list = [];
             
             % Dataset messages have not been processed,
