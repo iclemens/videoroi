@@ -24,10 +24,50 @@ classdef VideoROIDatasetController < handle
         % Dataset to display
         dataset = [];
         
+        % Stimulus cache
+        stimCache = cell(0, 2);
+        
         currentTrial;
     end
 
     methods(Access = private)
+
+        %
+        % Load/cache stimulus
+        %
+        function stim = loadStimulus(obj, stimulus)
+            index = find(strcmp({obj.stimCache{:, 1}}, stimulus.name));
+
+            if ~isempty(index)
+                stim = obj.stimCache{index(1), 2};
+                return;
+            end
+                       
+            [~, filename, ~] = fileparts(stimulus.name);
+            stimInfo = obj.project.getInfoForStimulus(filename);            
+            if ~isstruct(stimInfo), warning('Invalid stimulus specified'); end;            
+            stimFile = fullfile(stimInfo.resourcepath, stimInfo.filename);
+
+            h = waitbar(0, 'Opening stimulus...');
+
+            try
+                stim = VideoROIStimulus();
+                stim.openStimulus(stimFile);
+                close(h);
+            catch e
+                disp(e);
+            end                                    
+            
+            obj.stimCache{end + 1, 1} = stimulus.name;
+            obj.stimCache{end, 2} = stim;
+        end
+
+
+        function clearCache(obj)            
+            obj.stimCache = cell(0, 2);
+        end
+
+
         function onChangeTrial(obj, ~, trialId)
             obj.currentTrial = trialId;
             obj.view.setCurrentTrial(obj.currentTrial);
@@ -42,15 +82,23 @@ classdef VideoROIDatasetController < handle
                 samples(:, [col_x col_y]));
 
             obj.view.setTotalTime(diff(samples([1 end], col_time)));
+            obj.clearCache();
         end
 
 
-        function onChangeTime(obj, ~, time)
-            % Determine which frame / stimulus to display
-            % Use the task compositor to do this?
-            time
-            stimuli = obj.dataset.getStimuliAtTime(obj.currentTrial, time);
-            stimuli
+        function onChangeTime(obj, ~, time)            
+            stimuli = obj.dataset.getStimuliAtTime(obj.currentTrial, time);           
+
+            % Append data for each stimulus
+            for i = 1:numel(stimuli)
+                stimulus = obj.loadStimulus(stimuli(i));
+                I = stimulus.readFrame(stimuli(i).frame);
+                
+                stimuli(i).data = I;
+            end
+            
+            % Ask view to update scene
+            obj.view.updateScreen(stimuli);
         end
     end
 end

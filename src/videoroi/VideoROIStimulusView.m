@@ -251,7 +251,7 @@ classdef VideoROIStimulusView < EventProvider
                         setPositionConstraintFcn(obj.frameRect{i}, fcn);
                     end
                 end
-            end            
+            end
         end
         
         

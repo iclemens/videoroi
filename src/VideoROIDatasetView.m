@@ -109,6 +109,22 @@ classdef VideoROIDatasetView < EventProvider
             plot(h, time, position(:, 1) - nanmean(position(:, 1)), 'b');
             plot(h, time, position(:, 2) - nanmean(position(:, 2)), 'r');
         end
+        
+        
+        function updateScreen(obj, stimuli)
+            h = obj.screenAxes.getHandle();
+            
+            child = get(h, 'Children');
+            for i = 1:numel(child)
+                delete(child(i));
+            end
+
+            for i = 1:numel(stimuli)
+                X = linspace(stimuli.position(1), stimuli.position(1) + stimuli.position(3) - 1, size(stimuli(i).data, 1));
+                Y = linspace(stimuli.position(2), stimuli.position(2) + stimuli.position(4) - 1, size(stimuli(i).data, 2));
+                image(X, Y, stimuli(i).data, 'Parent', h);
+            end
+        end
     end
 
     properties(Access = private)
