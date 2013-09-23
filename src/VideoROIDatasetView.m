@@ -119,9 +119,10 @@ classdef VideoROIDatasetView < EventProvider
                 delete(child(i));
             end
 
+            hold(h, 'on');
             for i = 1:numel(stimuli)
-                X = linspace(stimuli.position(1), stimuli.position(1) + stimuli.position(3) - 1, size(stimuli(i).data, 1));
-                Y = linspace(stimuli.position(2), stimuli.position(2) + stimuli.position(4) - 1, size(stimuli(i).data, 2));
+                X = linspace(stimuli(i).position(1), stimuli(i).position(1) + stimuli(i).position(3) - 1, size(stimuli(i).data, 1));
+                Y = linspace(stimuli(i).position(2), stimuli(i).position(2) + stimuli(i).position(4) - 1, size(stimuli(i).data, 2));
                 image(X, Y, stimuli(i).data, 'Parent', h);
             end
         end
@@ -230,6 +231,9 @@ classdef VideoROIDatasetView < EventProvider
             I = ones(obj.screenResolution(1), obj.screenResolution(2), 3);
             obj.screenImage = image(I, 'Parent', h);
 
+            xlim(h, [0.5 obj.screenResolution(1) + 0.5]);
+            ylim(h, [0.5 obj.screenResolution(2) + 0.5]);
+            
             set(h, 'XTick', []);
             set(h, 'YTick', []);            
         end
