@@ -233,6 +233,7 @@ classdef VideoROIDatasetView < EventProvider
 
             xlim(h, [0.5 obj.screenResolution(1) + 0.5]);
             ylim(h, [0.5 obj.screenResolution(2) + 0.5]);
+            axis(h, 'equal');
             
             set(h, 'XTick', []);
             set(h, 'YTick', []);            
