@@ -273,10 +273,5 @@ classdef VideoROIStimulusController < handle
       obj.view.setSceneChange(obj.frameSceneChange);
     end
     
-  end
-  
-  
-  methods            
-    
-  end
+  end  
 end
