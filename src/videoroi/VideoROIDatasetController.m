@@ -32,9 +32,7 @@ classdef VideoROIDatasetController < handle
   
   methods(Access = private)
     
-    %
     % Load/cache stimulus
-    %
     function stim = loadStimulus(obj, stimulus)
       index = find(strcmp({obj.stimCache{:, 1}}, stimulus.name));
       
