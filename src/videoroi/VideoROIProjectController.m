@@ -179,6 +179,16 @@ classdef VideoROIProjectController < handle
         % Open stimulus and region view.
         %
         function onOpenStimulus(obj, ~, index)
+          stimInfo = obj.project.getInfoForStimulus(index);
+          
+          if ~isstruct(stimInfo)
+            obj.view.displayError('Selected stimulis is corrupt.');
+            return;
+          end
+          
+          stimulus = VideoROIStimulus();
+          stimulus.openStimulus(stimInfo.resourcepath);
+          VideoROIStimulusController(obj.project, stimulus);
         end
 
 
