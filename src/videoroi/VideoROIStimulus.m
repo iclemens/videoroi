@@ -126,10 +126,11 @@ classdef VideoROIStimulus < handle
         catch
           I = obj.videoReader.read(index);
         end;
-      end;
-      
-      if strcmp(obj.type, 'image')
+      elseif strcmp(obj.type, 'image')
         I = obj.imageBuffer;
+      else
+        fprintf('Stimulus: Type %s not recognized.\n', obj.type);
+        I = zeros(1, 1, 3);
       end
     end
   end;
