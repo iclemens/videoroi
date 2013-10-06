@@ -169,9 +169,7 @@ classdef VideoROIProjectController < handle
         return;
       end
       
-      stimulus = VideoROIStimulus();
-      stimulus.openStimulus(stimInfo.resourcepath);
-      VideoROIStimulusController(obj.project, stimulus);
+      VideoROIStimulusController(obj.project, stimInfo);
     end
     
     

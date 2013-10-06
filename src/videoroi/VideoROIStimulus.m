@@ -81,12 +81,13 @@ classdef VideoROIStimulus < handle
       
       ext = lower(ext);
       
-      if(any(strcmp(ext, videoExt)))
+      if any(strcmp(ext, videoExt))
         obj.openVideo(stimulusFile);
-      end
-      
-      if(any(strcmp(ext, imageExt)))
+      elseif any(strcmp(ext, imageExt))
         obj.openImage(stimulusFile);
+      else
+        error('VideoROIStimulus:FormatNotRecognized', ...
+          'Invalid stimulus format: (%s)', ext);
       end
     end
     
