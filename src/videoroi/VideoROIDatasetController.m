@@ -44,8 +44,14 @@ classdef VideoROIDatasetController < handle
             end
                        
             [~, filename, ~] = fileparts(stimulus.name);
-            stimInfo = obj.project.getInfoForStimulus(filename);            
-            if ~isstruct(stimInfo), warning('Invalid stimulus specified'); end;            
+            stimInfo = obj.project.getInfoForStimulus(filename);
+
+            if ~isstruct(stimInfo)
+              warning('Invalid stimulus specified');
+              stim = [];
+              return;
+            end;
+            
             stimFile = fullfile(stimInfo.resourcepath, stimInfo.filename);
 
             h = waitbar(0, 'Opening stimulus...');
@@ -63,7 +69,7 @@ classdef VideoROIDatasetController < handle
         end
 
 
-        function clearCache(obj)            
+        function clearCache(obj)       
             obj.stimCache = cell(0, 2);
         end
 
@@ -91,8 +97,17 @@ classdef VideoROIDatasetController < handle
 
             % Append data for each stimulus
             for i = 1:numel(stimuli)
-                stimulus = obj.loadStimulus(stimuli(i));
-                I = stimulus.readFrame(stimuli(i).frame);
+                stimulus = obj.loadStimulus(stimuli(i));                
+                
+                if ~isempty(stimulus)
+                  I = stimulus.readFrame(stimuli(i).frame);
+                else
+                  I = zeros(stimuli.position(3), stimuli.position(4), 3);
+                  I(1, :, 1) = 1;
+                  I(:, 1, 1) = 1;
+                  I(stimuli.position(3), :, 1) = 1;
+                  I(:, stimuli.position(4), 1) = 1;
+                end
                 
                 stimuli(i).data = I;
             end
