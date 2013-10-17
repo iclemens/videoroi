@@ -123,8 +123,10 @@ classdef VideoROIDatasetController < handle
         stimuli(i).data = I;
       end     
       
+      gaze = obj.dataset.getAnnotationsForTimeInterval(obj.currentTrial, time * 1e6, (time + 1/3) * 1e6, 'pixels');
+      
       % Ask view to update scene      
-      obj.view.updateScreen(stimuli);
+      obj.view.updateScreen(stimuli, gaze);
     end
   end
 end

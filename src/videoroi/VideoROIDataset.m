@@ -138,6 +138,18 @@ classdef VideoROIDataset < handle
 
             [samples, columns] = obj.getAnnotationsForInterval(trialId, obj.data(trialId).stimulus(sel).onset, obj.data(trialId).stimulus(sel).offset);
         end
+        
+        
+        function [samples, columns] = getAnnotationsForTimeInterval(obj, trialId, from, to, units)
+          if nargin < 5, units = 'pixels'; end;
+          
+          col = idf_find_columns({'Time'}, obj.header);
+
+          [~, first] = min(abs(obj.data(trialId).samples(:, col) - from));
+          [~, last] = min(abs(obj.data(trialId).samples(:, col) - to));
+          
+          [samples, columns] = obj.getAnnotationsForInterval(trialId, first, last, units);
+        end
 
         
         function [samples, columns] = getAnnotationsForInterval(obj, trialId, first, last, units)

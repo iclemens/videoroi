@@ -111,7 +111,7 @@ classdef VideoROIDatasetView < EventProvider
         end
         
         
-        function updateScreen(obj, stimuli)
+        function updateScreen(obj, stimuli, gaze)
             h = obj.screenAxes.getHandle();
             
             child = get(h, 'Children');
@@ -138,6 +138,9 @@ classdef VideoROIDatasetView < EventProvider
                   line(position(1) + [0 1] * position(3), position(2) + [1 1] * position(4), 'Parent', h);
                 end                
             end
+            
+            plot(gaze(gaze(:, 4) == 1, 2), gaze(gaze(:, 4) == 1, 3), 'rx', 'Parent', h);
+            plot(gaze(gaze(:, 5) == 1, 2), gaze(gaze(:, 5) == 1, 3), 'g.', 'Parent', h);
         end
     end
 
