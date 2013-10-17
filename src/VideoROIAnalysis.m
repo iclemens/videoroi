@@ -51,7 +51,7 @@ function VideoROIAnalysis(cfg)
         data.labels = {'px', 'py', 'fixation_mask', 'saccade_mask'};
         
         % Load dataset and trials
-        dataset = VideoROIDataset(dataset_info, 'Task4Logic');
+        dataset = VideoROIDataset(dataset_info, project.getTaskName());
         stimuli = cell(1, dataset.getNumberOfTrials());
         for t = 1:dataset.getNumberOfTrials();
             stimuli{t} = dataset.getStimuliForTrial(t);
