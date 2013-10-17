@@ -77,14 +77,20 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
       
       cfg.stimuli{t}(s).regionState = roiState;
       cfg.stimuli{t}(s).sceneChange = sceneChange;
-      cfg.stimuli{t}(s).regionPositions = reshape(roiPosition(:, :, :), [numel(roiState) 4]);
+      cfg.stimuli{t}(s).regionPositions = roiPosition;
       
       % Convert region positions into screen coordinates
-      cfg.stimuli{t}(s).regionPositions = cfg.stimuli{t}(s).regionPositions .* repmat( ...
-        [cfg.stimuli{t}(s).position(3) / stimulus_info.width ...
-         cfg.stimuli{t}(s).position(4) / stimulus_info.height], sum(roiState), 2);
-      
-      cfg.stimuli{t}(s).regionPositions(1:2) = cfg.stimuli{t}(s).regionPositions(1:2) + cfg.stimuli{t}(s).position(1:2);
+      for r = 1:nregions
+        cfg.stimuli{t}(s).regionPositions(r, 1, 1) = cfg.stimuli{t}(s).regionPositions(r, 1, 1) .* ...
+          cfg.stimuli{t}(s).position(3) / stimulus_info.width + cfg.stimuli{t}(s).position(1);
+        cfg.stimuli{t}(s).regionPositions(r, 1, 3) = cfg.stimuli{t}(s).regionPositions(r, 1, 3) .* ...
+          cfg.stimuli{t}(s).position(3) / stimulus_info.width;
+        
+        cfg.stimuli{t}(s).regionPositions(r, 1, 2) = cfg.stimuli{t}(s).regionPositions(r, 1, 2) .* ...
+          cfg.stimuli{t}(s).position(4) / stimulus_info.height + cfg.stimuli{t}(s).position(2);
+        cfg.stimuli{t}(s).regionPositions(r, 1, 4) = cfg.stimuli{t}(s).regionPositions(r, 1, 4) .* ...        
+          cfg.stimuli{t}(s).position(4) / stimulus_info.height;
+      end      
     end
 
     nregions = numel(uniqueRegions{t});
@@ -107,18 +113,15 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
     cluster_ptr = 1;
     
     for c = 1:size(clusters, 1)
-      cluster_indices = clusters(c, 1):clusters(c, 2);
+      %cluster_indices = clusters(c, 1):clusters(c, 2);
       
       % Compute score for every region
-      stims = zeros(nregions, 1);
-      scores = zeros(nregions, 1);
-      total = 0;
+      scores = zeros(numel(cfg.stimuli{t}), nregions);
+      total = clusters(c, 2) - clusters(c, 1) + 1;
       
       for s = 1:numel(cfg.stimuli{t})
         % Determine samples valid for this stimulus               
         sel = max(cfg.stimuli{t}(s).onset, clusters(c, 1)):min(cfg.stimuli{t}(s).offset, clusters(c, 2));
-        
-        total = total + numel(sel);
 
         % Don't bother if it is empty (outside of range)
         if isempty(sel), continue; end;
@@ -128,36 +131,33 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
           if ~cfg.stimuli{t}(s).regionState(r), continue; end;
           
           % Find global region id
-          ur_id = strcmp(uniqueRegions, cfg.stimuli{t}(s).regionLabels{r});
-          
-          if stims(ur_id) == 0, stims(ur_id) = s; end;
+          ur_id = strcmp(uniqueRegions{t}, cfg.stimuli{t}(s).regionLabels{r});
           
           delta_score = compute_score( ...
             data.trials{t}(sel, [col_px, col_py]), ...
-            squeeze(cfg.stimuli{t}(s).regionPositions(r, :)));
-          scores(ur_id) = scores(ur_id) + delta_score;
+            squeeze(cfg.stimuli{t}(s).regionPositions(r, :, :)));
+          scores(s, ur_id) = scores(s, ur_id) + delta_score;
         end
-      end      
+      end
 
-      % Find region with maximum score
-      scores = scores / total;
-      outside_score = 1 - sum(scores);
-      [score, roi_nr] = max(scores);
-      
-      if(outside_score > score)
+      if isempty(scores)
         roi_nr = 0;
-        score = outside_score;
-      end
-      
-      if isempty(score)
-        roi_nr = 0;
-        score = outside_score;
-      end
-      
-      if roi_nr > 0
-        stim_nr = stims(roi_nr);
-      else
         stim_nr = 0;
+        score = NaN;
+      else      
+        score_by_region = sum(scores) / total;
+      
+        % Find region with maximum score        
+        outside_score = 1 - sum(score_by_region);
+        [score, roi_nr] = max(score_by_region);
+                        
+        if(outside_score > score)
+          stim_nr = 0;
+          roi_nr = 0;
+          score = outside_score;
+        else
+          [~, stim_nr] = max(scores(:, roi_nr));
+        end
       end
       
       % Prepare information about this cluster
