@@ -64,8 +64,9 @@ classdef VideoROIDatasetController < handle
       stimInfo = obj.project.getInfoForStimulus(filename);
       
       if ~isstruct(stimInfo)
-        warning('Invalid stimulus specified');
+        warning('Invalid stimulus specified (%s)', filename);
         stim = [];
+        regs = [];
         return;
       end;
       
@@ -132,9 +133,14 @@ classdef VideoROIDatasetController < handle
       if obj.currentTime + 1/30 > obj.endTime
         stop(obj.playbackTimer);
         obj.view.setPlayingState(false);
-      else        
+      else
         obj.currentTime = obj.currentTime + 1/30;
-        obj.view.setCurrentTime(obj.currentTime);
+        
+        try
+          obj.view.setCurrentTime(obj.currentTime);
+        catch e
+          rethrow e;
+        end
       end
     end
 
@@ -168,8 +174,8 @@ classdef VideoROIDatasetController < handle
         
         if ~isempty(stimulus)
           I = stimulus.readFrame(stimuli(i).frame);
-          [states, positions] = regions.getFrameInfo(stimuli(i).frame);          
-          stimuli(i).positions = positions(states, :, :);
+          [states, positions] = regions.getFrameInfo(stimuli(i).frame);
+          stimuli(i).positions = positions(logical(states), :, :);
         else
           I = zeros(stimuli.position(3), stimuli.position(4), 3);
           I(1, :, 1) = 1;
