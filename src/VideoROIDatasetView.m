@@ -164,6 +164,7 @@ classdef VideoROIDatasetView < EventProvider
         function setupGui(obj)
             obj.screenAxes = GUIAxes();
             obj.screenAxes.setMargin([0 0 0 0]);
+            obj.screenAxes.setPadding([0 0 0 0]);
             obj.screenAxes.addEventListener('construction', @(src) obj.onScreenAxesCreated(src));
 
             obj.traceAxes = GUIAxes();
@@ -192,13 +193,13 @@ classdef VideoROIDatasetView < EventProvider
             obj.timeLabel = GUILabel('Time {} of {}sec / Trial {} of {}');
 
             horizontalSplit = GUIBoxArray();
-            horizontalSplit.setHorizontalDistribution([NaN 150]);            
+            horizontalSplit.setHorizontalDistribution([NaN]);  
+            horizontalSplit.setMargin([0 0 0 0]);
             horizontalSplit.addComponent(obj.screenAxes);
-            horizontalSplit.addComponent(GUILabel('Placeholder'));
+            %horizontalSplit.addComponent(GUILabel('Placeholder'));
 
             % Put all components together
             verticalSplit = GUIBoxArray();
-            %verticalSplit.setMargin([0 0 0 0]);
             verticalSplit.setVerticalDistribution([NaN 200 25 25 25]);
             verticalSplit.addComponent(horizontalSplit);            
             verticalSplit.addComponent(obj.traceAxes);
