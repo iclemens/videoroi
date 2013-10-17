@@ -37,30 +37,46 @@ classdef VideoROIDataset < handle
             obj.defineScreen(scr);
         end
         
-      
-        function ppd = pixelsPerDegree(obj)
+
+        %
+        % Returns the number of pixels per degree (for centre of screen).
+        %
+        function ppd = getPixelsPerDegree(obj)
             lengthperdeg = tan(degtorad(1)) * obj.screen.distance;
             ppd = lengthperdeg / obj.screen.dimensions(1) * obj.screen.resolution(1);
-        end        
+        end
         
         
+        %
+        % Returns screen resolution.
+        %
+        function resolution = getScreenResolution(obj)
+            resolution = obj.screen.resolution;
+        end
+        
+        
+        %
+        % Set screen properties for calibration
+        %
         function defineScreen(obj, screen)
-            % Set screen properties for calibration
-            
             obj.screen = screen;
             obj.updateGazeCoordinates();
             obj.annotateTrace();
         end
-        
-        
+
+
+        %
+        % Return number of trials
+        %
         function count = getNumberOfTrials(obj)
             count = length(obj.data);
         end
-        
-        
-        function list = getTrialsWithStimulus(obj, stimulusName)
-            % List the trials in which a given stimulus is presented
-            
+
+
+        %
+        % List the trials in which a given stimulus is presented
+        %
+        function list = getTrialsWithStimulus(obj, stimulusName)            
             list = [];
             
             % Dataset messages have not been processed,
@@ -88,6 +104,19 @@ classdef VideoROIDataset < handle
             stimuli = obj.data(trialId).stimulus;
         end
         
+
+        %
+        % Returns the stimuli being presented at a given point in time.
+        %
+        function stimuli = getStimuliAtTime(obj, trialId, time)
+            col_time = strcmp(obj.header.Columns, 'Time');            
+            [~, sample] = min(abs(obj.data(trialId).samples(:, col_time) - time));
+            
+            stimuli = obj.data(trialId).stimulus( ...
+                [obj.data(trialId).stimulus.onset] <= sample & ...
+                [obj.data(trialId).stimulus.offset] >= sample);
+        end
+        
         
         function [samples, columns] = getAnnotationsForTrial(obj, trialId, units)
             if nargin < 3
@@ -108,6 +137,18 @@ classdef VideoROIDataset < handle
             end
 
             [samples, columns] = obj.getAnnotationsForInterval(trialId, obj.data(trialId).stimulus(sel).onset, obj.data(trialId).stimulus(sel).offset);
+        end
+        
+        
+        function [samples, columns] = getAnnotationsForTimeInterval(obj, trialId, from, to, units)
+          if nargin < 5, units = 'pixels'; end;
+          
+          col = idf_find_columns({'Time'}, obj.header);
+
+          [~, first] = min(abs(obj.data(trialId).samples(:, col) - from));
+          [~, last] = min(abs(obj.data(trialId).samples(:, col) - to));
+          
+          [samples, columns] = obj.getAnnotationsForInterval(trialId, first, last, units);
         end
 
         

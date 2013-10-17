@@ -13,15 +13,30 @@ function VideoROIAnalysis(cfg)
 
     vr_initialize();
     cfg = vr_checkconfig(cfg, 'defaults', {'units', 'us'});
-    cfg = vr_checkconfig(cfg, 'defaults', {'projectdirectory', @(x) uigetdir('', 'Open project directory')});
-    cfg = vr_checkconfig(cfg, 'validate', {'projectdirectory', @(v) ~isempty(v) && ischar(v) && exist(v, 'dir') == 7});
+    
+    if isfield(cfg, 'project') && isfield(cfg, 'projectdirectory')
+      error('VideoROIAnalysis:cfgError', 'Configuration cannot both contain project and projectDirectory.');
+    end
+    
+    if isfield(cfg, 'project')
+      cfg = vr_checkconfig(cfg, 'validate', {'project', @(v) isa(v, 'VideoROIProject')});
+    else
+      cfg = vr_checkconfig(cfg, 'defaults', {'projectdirectory', @(x) uigetdir('', 'Open project directory')});
+      cfg = vr_checkconfig(cfg, 'validate', {'projectdirectory', @(v) ~isempty(v) && ischar(v) && exist(v, 'dir') == 7});
+    end
+    
     cfg = vr_checkconfig(cfg, 'defaults', {'outputfile', fullfile(cfg.projectdirectory, 'output.csv')});   
     cfg = vr_checkconfig(cfg, 'defaults', {'ignoreafterscenechange', 0.15});
     cfg = vr_checkconfig(cfg, 'defaults', {'minimumfixationduration', 0.10});
     cfg = vr_checkconfig(cfg, 'defaults', {'method', 'highest_score'});
     
     % Open project and output file
-    project = VideoROIProject(cfg.projectdirectory);
+    if isfield(cfg, 'project')
+      project = cfg.project;
+    else
+      project = VideoROIProject(cfg.projectdirectory);
+    end
+    
     [outputFile, message] = fopen(cfg.outputfile, 'w');
     if(outputFile == -1), error(['could not open output file: ' message]); end
 
@@ -36,7 +51,7 @@ function VideoROIAnalysis(cfg)
         data.labels = {'px', 'py', 'fixation_mask', 'saccade_mask'};
         
         % Load dataset and trials
-        dataset = VideoROIDataset(dataset_info, 'Task4Logic');
+        dataset = VideoROIDataset(dataset_info, project.getTaskName());
         stimuli = cell(1, dataset.getNumberOfTrials());
         for t = 1:dataset.getNumberOfTrials();
             stimuli{t} = dataset.getStimuliForTrial(t);
@@ -76,15 +91,21 @@ function VideoROIAnalysis(cfg)
         % Write fixations to file
         for t = 1:length(fixations.trials)
             for c = 1:size(fixations.trials{t})
-                if(fixations.trials{t}(c, 2) == 0)
+                if fixations.trials{t}(c, 2) == 0
                     region_label = 'OutsideRegions';
                 else
-                    region_label = regionlabels{t}{fixations.trials{t}(c, 1)}{fixations.trials{t}(c, 2)};
+                    region_label = regionlabels{t}{fixations.trials{t}(c, 2)};
                 end
                 
+                if fixations.trials{t}(c, 1) == 0
+                    stim_label = 'OutsideRegions';
+                else
+                    stim_label = stimuli{t}(fixations.trials{t}(c, 1)).name;
+                end
+
                 fprintf(outputFile, sprintf('"%s", "%s", "%s", %d, %d, %d, %d, %d, %d, %.2f\r\n', ...
                     dataset_info.name, ...
-                    stimuli{t}(fixations.trials{t}(c, 1)).name, ...
+                    stim_label, ...
                     region_label, ...
                     fixations.trials{t}(c, 2), ...
                     fixations.trials{t}(c, 3), ...
