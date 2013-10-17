@@ -98,7 +98,7 @@ function VideoROIAnalysis(cfg)
                 end
                 
                 if fixations.trials{t}(c, 1) == 0
-                    stim_label = 'OutsideStimuli';
+                    stim_label = 'OutsideRegions';
                 else
                     stim_label = stimuli{t}(fixations.trials{t}(c, 1)).name;
                 end
