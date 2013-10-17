@@ -38,11 +38,34 @@ classdef VideoROIProjectView < EventProvider
             
             % Add new entries
             for t = 1:length(taskList)
-                uimenu(obj.taskMenu, 'Label', taskList(t).name, 'Callback', @(src, x) obj.onSetTask(taskList(t).name));
+                uimenu(obj.taskMenu, ...
+                  'Label', taskList(t).name, ...
+                  'Callback', @(src, x) obj.onSetTask(taskList(t).name));
             end
         end
         
         
+        %
+        % Update list of available scripts.
+        %
+        % @param scriptList  Array of struct of available scripts.
+        %
+        function updateScriptList(obj, scriptsList)
+            % Remove old entries
+            children = get(obj.scriptsMenu, 'Children');
+            for i = 1:length(children)
+                delete(children(i));
+            end
+
+            % Add new entries
+            for s = 1:length(scriptsList)
+                uimenu(obj.scriptsMenu, ...
+                  'Label', scriptsList(s).name, ...
+                  'Callback', @(src, x) obj.onExecuteScript(scriptsList(s).name));
+            end
+        end        
+
+
         %
         % Update list of datasets
         %
@@ -95,6 +118,7 @@ classdef VideoROIProjectView < EventProvider
         
         taskMenu;
         overlapMenuItem;
+        scriptsMenu;
         
         unsavedFlag;
         overlapState;
@@ -168,9 +192,11 @@ classdef VideoROIProjectView < EventProvider
             h = uimenu('Label', '&Options');
             obj.taskMenu = uimenu(h, 'Label','Set &task');            
             obj.overlapMenuItem = uimenu(h, 'Label', 'Disallow &overlap', 'Callback', @(src, x) obj.onToggleOverlap(src));
-                        
+            
             h = uimenu('Label', '&Analysis');
             uimenu(h, 'Label', 'Perform analysis...', 'Callback', @(src, x) obj.onPerformAnalysis(src));
+
+            obj.scriptsMenu = uimenu('Label', '&Scripts...');            
         end
         
         
@@ -215,6 +241,14 @@ classdef VideoROIProjectView < EventProvider
         function onSetTask(obj, taskName)
             obj.invokeEventListeners('setTask', taskName);
         end
+
+        
+        %
+        % Function called when a script is selected
+        %
+        function onExecuteScript(obj, scriptName)
+            obj.invokeEventListeners('executeScript', scriptName);
+        end
         
 
         %
@@ -230,7 +264,7 @@ classdef VideoROIProjectView < EventProvider
         %
         function onPerformAnalysis(obj, ~)
             filename = uiputfile('*.csv', 'Choose output location');            
-            if(isempty(filename)), return; end;            
+            if(isempty(filename)), return; end;
             
             obj.invokeEventListeners('performAnalysis', filename);
         end

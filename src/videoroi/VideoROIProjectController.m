@@ -3,6 +3,7 @@ classdef VideoROIProjectController < handle
     function obj = VideoROIProjectController()
       obj.view = VideoROIProjectView();
       obj.view.updateTaskList(VideoROITaskFactory.enumerateTasks());
+      obj.view.updateScriptList(obj.enumerateScripts());
       
       
       obj.view.addEventListener('newProject', @(src, projectDirectory) obj.onNewProject(src, projectDirectory));
@@ -18,7 +19,35 @@ classdef VideoROIProjectController < handle
       obj.view.addEventListener('setTask', @(src, taskName) obj.onSetTask(src, taskName));
       obj.view.addEventListener('toggleOverlap', @(src) obj.onToggleOverlap(src));
       
+      obj.view.addEventListener('executeScript', @(src, scriptName) obj.onExecuteScript(src, scriptName));
+      
       obj.view.addEventListener('performAnalysis', @(src, filename) obj.onPerformAnalysis(src, filename));
+    end
+    
+    
+    % Returns a list of all supported scripts
+    function scriptList = enumerateScripts(~)      
+      % First determine directory containing script functions
+      sourceDir = fileparts(mfilename('fullpath'));
+      scriptDir = fullfile(sourceDir, 'Scripts');
+      
+      % Add it to the path and enumerate files
+      add_path(scriptDir);
+      scriptFiles = dir(scriptDir);
+      
+      % Create list of all non-directories with extension .m
+      scriptList = struct('name', {});
+      
+      for i = 1:length(scriptFiles)
+        if scriptFiles(i).isdir, continue; end;
+        
+        [~, file, ext] = fileparts(scriptFiles(i).name);
+        
+        if strcmp(ext, '.m')
+          j = length(scriptList) + 1;
+          scriptList(j).name = file;
+        end
+      end
     end
     
     
@@ -27,9 +56,8 @@ classdef VideoROIProjectController < handle
     %%%%%%%%%%%%%%%%%%%%%%
     
     
-    function onNewProject(obj, ~, projectDirectory)
-      % Creates a new project.
-      
+    % Creates a new project.
+    function onNewProject(obj, ~, projectDirectory)            
       % Close project if one was open
       if isa(obj.project, 'VideoROIProject')
         obj.onCloseProject(obj);
@@ -46,7 +74,7 @@ classdef VideoROIProjectController < handle
     
     
     % Open a project.
-    function onOpenProject(obj, ~, projectDirectory)      
+    function onOpenProject(obj, ~, projectDirectory)
       % Close project if one is open
       if isa(obj.project, 'VideoROIProject')
         obj.onCloseProject(obj);
@@ -96,6 +124,11 @@ classdef VideoROIProjectController < handle
       
       % Fixme: should inform open datasets they should reload.
     end
+    
+    
+    function onExecuteScript(obj, ~, scriptName)
+      eval(sprintf('script = %s(); script.executeScript(obj.project);', scriptName));
+    end
   end
   
   
@@ -117,7 +150,7 @@ classdef VideoROIProjectController < handle
   
   methods(Access = private)
     % Add dataset to project.
-    function onAddDataset(obj, ~, filename)      
+    function onAddDataset(obj, ~, filename)
       if(~isempty(obj.project))
         try
           obj.project.addDataset(filename);
@@ -132,7 +165,7 @@ classdef VideoROIProjectController < handle
     
     
     % Add stimulus to project.
-    function onAddStimulus(obj, ~, filename)      
+    function onAddStimulus(obj, ~, filename)
       if(~isempty(obj.project))
         try
           obj.project.addStimulus(filename);
@@ -145,9 +178,9 @@ classdef VideoROIProjectController < handle
       end
     end
     
-
-    % Open eye-trace view.    
-    function onOpenDataset(obj, ~, index)      
+    
+    % Open eye-trace view.
+    function onOpenDataset(obj, ~, index)
       datasetInfo = obj.project.getInfoForDataset(index);
       
       if ~isstruct(datasetInfo)
@@ -161,7 +194,7 @@ classdef VideoROIProjectController < handle
     
     
     % Open stimulus and region view.
-    function onOpenStimulus(obj, ~, index)      
+    function onOpenStimulus(obj, ~, index)
       stimInfo = obj.project.getInfoForStimulus(index);
       
       if ~isstruct(stimInfo)
@@ -174,7 +207,7 @@ classdef VideoROIProjectController < handle
     
     
     % Update list of datasets.
-    function updateDatasetList(obj)      
+    function updateDatasetList(obj)
       numDatasets = obj.project.getNumberOfDatasets;
       labels = cell(1, numDatasets);
       
@@ -198,6 +231,13 @@ classdef VideoROIProjectController < handle
       end
       
       obj.view.updateStimulusList(labels);
+    end
+    
+    
+    function onPerformAnalysis(obj, ~, filename)
+      cfg = [];
+      cfg.project = obj.project;
+      cfg.outputfile = filename;
     end
   end
 end

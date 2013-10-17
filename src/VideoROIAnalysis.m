@@ -13,15 +13,30 @@ function VideoROIAnalysis(cfg)
 
     vr_initialize();
     cfg = vr_checkconfig(cfg, 'defaults', {'units', 'us'});
-    cfg = vr_checkconfig(cfg, 'defaults', {'projectdirectory', @(x) uigetdir('', 'Open project directory')});
-    cfg = vr_checkconfig(cfg, 'validate', {'projectdirectory', @(v) ~isempty(v) && ischar(v) && exist(v, 'dir') == 7});
+    
+    if isfield(cfg, 'project') && isfield(cfg, 'projectdirectory')
+      error('VideoROIAnalysis:cfgError', 'Configuration cannot both contain project and projectDirectory.');
+    end
+    
+    if isfield(cfg, 'project')
+      cfg = vr_checkconfig(cfg, 'validate', {'project', @(v) isa(v, 'VideoROIProject')});
+    else
+      cfg = vr_checkconfig(cfg, 'defaults', {'projectdirectory', @(x) uigetdir('', 'Open project directory')});
+      cfg = vr_checkconfig(cfg, 'validate', {'projectdirectory', @(v) ~isempty(v) && ischar(v) && exist(v, 'dir') == 7});
+    end
+    
     cfg = vr_checkconfig(cfg, 'defaults', {'outputfile', fullfile(cfg.projectdirectory, 'output.csv')});   
     cfg = vr_checkconfig(cfg, 'defaults', {'ignoreafterscenechange', 0.15});
     cfg = vr_checkconfig(cfg, 'defaults', {'minimumfixationduration', 0.10});
     cfg = vr_checkconfig(cfg, 'defaults', {'method', 'highest_score'});
     
     % Open project and output file
-    project = VideoROIProject(cfg.projectdirectory);
+    if isfield(cfg, 'project')
+      project = cfg.project;
+    else
+      project = VideoROIProject(cfg.projectdirectory);
+    end
+    
     [outputFile, message] = fopen(cfg.outputfile, 'w');
     if(outputFile == -1), error(['could not open output file: ' message]); end
 
