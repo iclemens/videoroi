@@ -613,7 +613,8 @@ classdef VideoROIStimulusView < EventProvider
       obj.invokeEventListeners('sceneChanged', obj.frameIndex, obj.sceneCheckbox.getValue());
       obj.unsavedFlag = 1;
     end
-    
+
+
     function onKeyPress(obj, ~, event)
       if(strcmp(event.Key, 'leftarrow'))
         newValue = obj.frameSlider.getValue() - 1;

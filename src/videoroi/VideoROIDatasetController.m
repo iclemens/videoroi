@@ -3,6 +3,15 @@ classdef VideoROIDatasetController < handle
     function obj = VideoROIDatasetController(project, dataset)
       obj.project = project;
       obj.dataset = dataset;
+
+      obj.playbackTimer = timer( ...
+        'BusyMode', 'drop', ...
+        'ExecutionMode', 'FixedSpacing', ...
+        'StartDelay', round((1/30)*1000)/1000, ...
+        'Period', round((1/30)*1000)/1000, ...
+        'TimerFcn', @(src, tmp) obj.onTimerTick(src));
+      
+      obj.totalTime = 0;
       
       obj.view = VideoROIDatasetView();
       obj.view.setResolution(obj.dataset.getScreenResolution());
@@ -10,6 +19,8 @@ classdef VideoROIDatasetController < handle
       
       obj.view.addEventListener('changeTrial', @(src, value) obj.onChangeTrial(src, value));
       obj.view.addEventListener('changeTime', @(src, value) obj.onChangeTime(src, value));
+      
+      obj.view.addEventListener('playPauseVideo', @(src) obj.onPlayPauseVideo(src));
       
       obj.onChangeTrial([], 1);
     end
@@ -28,6 +39,13 @@ classdef VideoROIDatasetController < handle
     stimCache = cell(0, 2);
     
     currentTrial;
+    playbackTimer;
+    
+    currentTime;
+    totalTime;
+    
+    beginTime;
+    endTime;
   end
   
   methods(Access = private)
@@ -94,13 +112,54 @@ classdef VideoROIDatasetController < handle
       obj.view.updateTrace( ...
         samples(:, col_time) /1e6, ...
         samples(:, [col_x col_y]));
+            
+      obj.beginTime = samples(1, col_time) / 1e6;
+      obj.endTime = samples(end, col_time) / 1e6;
       
-      obj.view.setTotalTime(diff(samples([1 end], col_time)) / 1e6);
+      obj.totalTime = obj.endTime - obj.beginTime;
+      obj.view.setTotalTime(obj.totalTime);
+      
       obj.clearCache();
+      
+      obj.currentTime = obj.beginTime;
+      obj.view.setCurrentTime(obj.currentTime);
     end
+
     
+    % Handle timer tick (change frame).
+    % Updating occurs when the view asks for it (due to frame change).
+    function onTimerTick(obj, ~)
+      if obj.currentTime + 1/30 > obj.endTime
+        stop(obj.playbackTimer);
+        obj.view.setPlayingState(false);
+      else        
+        obj.currentTime = obj.currentTime + 1/30;
+        obj.view.setCurrentTime(obj.currentTime);
+      end
+    end
+
     
+    % Handle view's request for play or pause.
+    function onPlayPauseVideo(obj, ~)
+      % Start timer if it is stopped, otherwise stop timer
+      if(strcmp(get(obj.playbackTimer, 'Running'), 'off'))
+        % If positioned at end, start over
+        if obj.currentTime + 1/30 > obj.endTime
+          obj.currentTime = obj.beginTime;
+          obj.view.setCurrentTime(obj.currentTime);
+        end
+        
+        start(obj.playbackTimer);
+        obj.view.setPlayingState(true);
+      else
+        stop(obj.playbackTimer);
+        obj.view.setPlayingState(false);
+      end;
+    end    
+
+
     function onChangeTime(obj, ~, time)
+      obj.currentTime = time;
       stimuli = obj.dataset.getStimuliAtTime(obj.currentTrial, time * 1e6);
       
       % Append data for each stimulus
