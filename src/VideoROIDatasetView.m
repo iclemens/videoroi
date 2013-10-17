@@ -125,6 +125,19 @@ classdef VideoROIDatasetView < EventProvider
                 Y = linspace(stimuli(i).position(2), stimuli(i).position(2) + stimuli(i).position(4) - 1, size(stimuli(i).data, 2));
                 image(X, Y, stimuli(i).data, 'Parent', h);
             end
+            
+            for i = 1:numel(stimuli)
+                for j = 1:size(stimuli(i).positions, 1)
+                  position = squeeze(stimuli(i).positions(j, 1, :));
+                  position(1:2) = position(1:2) + stimuli(i).position(1:2)';
+                  
+                  line(position(1) + [0 0] * position(3), position(2) + [0 1] * position(4), 'Parent', h);
+                  line(position(1) + [1 1] * position(3), position(2) + [0 1] * position(4), 'Parent', h);
+                  
+                  line(position(1) + [0 1] * position(3), position(2) + [0 0] * position(4), 'Parent', h);
+                  line(position(1) + [0 1] * position(3), position(2) + [1 1] * position(4), 'Parent', h);
+                end                
+            end
         end
     end
 

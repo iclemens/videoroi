@@ -33,11 +33,12 @@ classdef VideoROIDatasetController < handle
   methods(Access = private)
     
     % Load/cache stimulus
-    function stim = loadStimulus(obj, stimulus)
-      index = find(strcmp({obj.stimCache{:, 1}}, stimulus.name));
+    function [stim, regs] = loadStimulus(obj, stimulus)
+      index = find(strcmp(obj.stimCache(:, 1), stimulus.name));
       
       if ~isempty(index)
         stim = obj.stimCache{index(1), 2};
+        regs = obj.stimCache{index(1), 3};
         return;
       end
       
@@ -62,11 +63,20 @@ classdef VideoROIDatasetController < handle
         disp(e);
       end
       
+      % Load regions of interest
+      regs = VideoROIRegions(stimInfo);           
+      filename = obj.project.getLatestROIFilename(stimInfo);
+      
+      if ~isempty(filename)
+        regs.loadRegionsFromFile(filename); 
+      end
+      
       obj.stimCache{end + 1, 1} = stimulus.name;
       obj.stimCache{end, 2} = stim;
+      obj.stimCache{end, 3} = regs;
     end
-    
-    
+
+
     function clearCache(obj)
       obj.stimCache = cell(0, 2);
     end
@@ -95,20 +105,23 @@ classdef VideoROIDatasetController < handle
       
       % Append data for each stimulus
       for i = 1:numel(stimuli)
-        stimulus = obj.loadStimulus(stimuli(i));
+        [stimulus, regions] = obj.loadStimulus(stimuli(i));
         
         if ~isempty(stimulus)
           I = stimulus.readFrame(stimuli(i).frame);
+          [states, positions] = regions.getFrameInfo(stimuli(i).frame);          
+          stimuli(i).positions = positions(states, :, :);
         else
           I = zeros(stimuli.position(3), stimuli.position(4), 3);
           I(1, :, 1) = 1;
           I(:, 1, 1) = 1;
           I(stimuli.position(3), :, 1) = 1;
           I(:, stimuli.position(4), 1) = 1;
+          stimuli(i).positions = zeros(0, 1, 4);
         end
         
         stimuli(i).data = I;
-      end
+      end     
       
       % Ask view to update scene      
       obj.view.updateScreen(stimuli);
