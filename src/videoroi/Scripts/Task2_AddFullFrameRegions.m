@@ -32,14 +32,12 @@ classdef Task2_AddFullFrameRegions
         regionsFilename = project.getNextROIFilename(stimInfo);
         regions.saveRegionsToFile(regionsFilename);        
       end
-      
     end
-    
   end
   
   
   methods(Access = private)
-    function str = capitalize(obj, str)
+    function str = capitalize(~, str)
       str = [upper(str(1)) lower(str(2:end))];
     end
   end

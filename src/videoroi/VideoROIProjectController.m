@@ -42,9 +42,16 @@ classdef VideoROIProjectController < handle
         if scriptFiles(i).isdir, continue; end;
         
         [~, file, ext] = fileparts(scriptFiles(i).name);
-        
+                
         if strcmp(ext, '.m')
           j = length(scriptList) + 1;
+          
+          try
+            eval(sprintf('script = %s(); info = script.getScriptInfo(); scriptList(%d).caption = info.caption;', file, j));
+          catch e
+            scriptList(j).caption = sprintf('Unknown script: %s', file);
+          end
+          
           scriptList(j).name = file;
         end
       end
