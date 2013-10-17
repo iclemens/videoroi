@@ -91,15 +91,21 @@ function VideoROIAnalysis(cfg)
         % Write fixations to file
         for t = 1:length(fixations.trials)
             for c = 1:size(fixations.trials{t})
-                if(fixations.trials{t}(c, 2) == 0)
+                if fixations.trials{t}(c, 2) == 0
                     region_label = 'OutsideRegions';
                 else
-                    region_label = regionlabels{t}{fixations.trials{t}(c, 1)}{fixations.trials{t}(c, 2)};
+                    region_label = regionlabels{t}{fixations.trials{t}(c, 2)};
                 end
                 
+                if fixations.trials{t}(c, 1) == 0
+                    stim_label = 'OutsideStimuli';
+                else
+                    stim_label = stimuli{t}(fixations.trials{t}(c, 1)).name;
+                end
+
                 fprintf(outputFile, sprintf('"%s", "%s", "%s", %d, %d, %d, %d, %d, %d, %.2f\r\n', ...
                     dataset_info.name, ...
-                    stimuli{t}(fixations.trials{t}(c, 1)).name, ...
+                    stim_label, ...
                     region_label, ...
                     fixations.trials{t}(c, 2), ...
                     fixations.trials{t}(c, 3), ...

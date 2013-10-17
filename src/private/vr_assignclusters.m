@@ -1,4 +1,4 @@
-function [output, regionlabels] = vr_assignclusters(cfg, data)
+function [output, uniqueRegions] = vr_assignclusters(cfg, data)
   % VR_ASSIGNCLUSTER  Assign ROIs to fixation clusters.
   %  FIXME: Currently only works for movies.
   %
@@ -34,66 +34,73 @@ function [output, regionlabels] = vr_assignclusters(cfg, data)
   col_py = find(strcmp(data.labels, 'py'));
   col_fixation_mask = strcmp(data.labels, 'fixation_mask');
   
-  regionlabels = cell(1, length(data.trials));
+  uniqueRegions = cell(1, length(data.trials));
+  
   for t = 1:length(data.trials)
-    % First determine stimulus and frame numbers for each sample
-    current_stimulus = '';
-    stimulus_mask = zeros(size(data.trials{t}, 1), 1);     % Stimulus present or not
-    frame_nrs = zeros(size(data.trials{t}, 1), 1);         % Which frame was shown
+    uniqueRegions{t} = cell(1, 0);
     
-    regionlabels{t} = cell(1, length(cfg.stimuli{t}));
-    
-    for s = 1:length(cfg.stimuli{t})
-      frame_nr = cfg.stimuli{t}(s).frame;
-      if(frame_nr == 0), continue; end;
-      sample_slc = cfg.stimuli{t}(s).onset:cfg.stimuli{t}(s).offset;
-      stimulus_mask(sample_slc) = 1;
-      frame_nrs(sample_slc) = frame_nr;
+    % Load regions of interest for all stimuli    
+    for s = 1:numel(cfg.stimuli{t})
+      stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli{t}(s).name);
+
+      if ~isstruct(stimulus_info)
+        fprintf('Warning: Stimulus "%s" not found in dataset.\n', cfg.stimuli{t}(s).name);
+        continue;
+      end
+
+      region_filename = cfg.project.getLatestROIFilename(stimulus_info);
+      regions = VideoROIRegions(stimulus_info);
+
+      if(isempty(region_filename))
+        fprintf('Warning: No ROIs defined for stimulus %s.\n', stimulus_info.name);
+        continue;
+      end
+
+      if(~exist(region_filename, 'file'))
+        fprintf('Warning: File %s does not exist', region_filename);
+        continue;
+      end
+
+      regions.loadRegionsFromFile(region_filename);
+      nregions = regions.getNumberOfRegions();
+
+      [roiState, roiPosition, sceneChange] = regions.getFrameInfo(cfg.stimuli{t}(s).frame);      
+      
+      cfg.stimuli{t}(s).regionLabels = cell(1, nregions);
+      for r = 1:nregions
+        cfg.stimuli{t}(s).regionLabels{r} = regions.getLabelForRegion(r);
+
+        if ~any(strcmp(uniqueRegions{t}, cfg.stimuli{t}(s).regionLabels{r}))
+          uniqueRegions{t}{end + 1} = cfg.stimuli{t}(s).regionLabels{r};
+        end
+      end
+      
+      cfg.stimuli{t}(s).regionState = roiState;
+      cfg.stimuli{t}(s).sceneChange = sceneChange;
+      cfg.stimuli{t}(s).regionPositions = reshape(roiPosition(:, :, :), [numel(roiState) 4]);
+      
+      % Convert region positions into screen coordinates
+      cfg.stimuli{t}(s).regionPositions = cfg.stimuli{t}(s).regionPositions .* repmat( ...
+        [cfg.stimuli{t}(s).position(3) / stimulus_info.width ...
+         cfg.stimuli{t}(s).position(4) / stimulus_info.height], sum(roiState), 2);
+      
+      cfg.stimuli{t}(s).regionPositions(1:2) = cfg.stimuli{t}(s).regionPositions(1:2) + cfg.stimuli{t}(s).position(1:2);
     end
+
+    nregions = numel(uniqueRegions{t});
     
-    % Load ROIs for stimulus
-    if length(cfg.stimuli{t}) < 1, continue; end;
-    
-    stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli{t}(1).name);
-    
-    if ~isstruct(stimulus_info)
-      fprintf('Warning: Stimulus "%s" not found in dataset.\n', cfg.stimuli{t}(1).name);
-      continue;
-    end
-    
-    region_filename = cfg.project.getLatestROIFilename(stimulus_info);
-    regions = VideoROIRegions(stimulus_info);
-    
-    if(isempty(region_filename))
-      fprintf('Warning: No ROIs defined for stimulus %s.\n', stimulus_info.name);
-      continue;
-    end
-    
-    if(~exist(region_filename, 'file'))
-      fprintf('Warning: File %s does not exist', region_filename);
-      continue;
-    end
-    
-    regions.loadRegionsFromFile(region_filename);
-    nregions = regions.getNumberOfRegions();
-    regionlabels{t}{1} = cell(1, nregions);
-    
-    for r = 1:nregions
-      regionlabels{t}{1}{r} = regions.getLabelForRegion(r);
-    end
     
     % Remove fixations after scene change
     for s = 1:length(cfg.stimuli{t})
-      frame_nr = cfg.stimuli{t}(s).frame;
-      [~, ~, ischange] = regions.getFrameInfo(frame_nr + 1);
-      if ~ischange, continue; end;
+      if ~cfg.stimuli{t}(s).sceneChange, continue; end;
       
       to_remove = data.time{t} >= cfg.stimuli{t}(s).onset & ...
         data.time{t} <= cfg.stimuli{t}(s).onset + cfg.ignoreafterscenechange * 1000 * 1000;
       
       data.trials{t}(to_remove, col_fixation_mask) = 0;
     end
-    
+
+
     % Then cluster and assign ROIs
     clusters = idf_cluster_mask(data.trials{t}(:, col_fixation_mask));
     output.trials{t} = nan(size(clusters, 1), length(output.labels));
@@ -103,29 +110,35 @@ function [output, regionlabels] = vr_assignclusters(cfg, data)
       cluster_indices = clusters(c, 1):clusters(c, 2);
       
       % Compute score for every region
+      stims = zeros(nregions, 1);
       scores = zeros(nregions, 1);
       total = 0;
       
-      for f = frame_nrs(clusters(c, 1)):frame_nrs(clusters(c, 2))
-        sel = frame_nrs == f;
-        sel(1:(clusters(c, 1) - 1)) = 0;
-        sel((clusters(c, 2) + 1):end) = 0;
+      for s = 1:numel(cfg.stimuli{t})
+        % Determine samples valid for this stimulus               
+        sel = max(cfg.stimuli{t}(s).onset, clusters(c, 1)):min(cfg.stimuli{t}(s).offset, clusters(c, 2));
         
-        total = total + sum(sel);
+        total = total + numel(sel);
+
+        % Don't bother if it is empty (outside of range)
+        if isempty(sel), continue; end;
         
-        [roiState, roiPosition, sceneChange] = regions.getFrameInfo(f + 1);
-        roiPosition(:, :, [1 3]) = roiPosition(:, :, [1 3]) ./ 640 .* 1024;
-        roiPosition(:, :, [2 4]) = roiPosition(:, :, [2 4]) ./ 640 .* 1024;
-        
-        for r = 1:nregions
-          delta_score = compute_score( ...
-            data.trials{t}(sel, [col_px col_py]), ...
-            squeeze(roiPosition(r, 1, :)));
+        for r = 1:numel(cfg.stimuli{t}(s).regionLabels)
+          % Skip invisible ID
+          if ~cfg.stimuli{t}(s).regionState(r), continue; end;
           
-          scores(r) = scores(r) + delta_score;
+          % Find global region id
+          ur_id = strcmp(uniqueRegions, cfg.stimuli{t}(s).regionLabels{r});
+          
+          if stims(ur_id) == 0, stims(ur_id) = s; end;
+          
+          delta_score = compute_score( ...
+            data.trials{t}(sel, [col_px, col_py]), ...
+            squeeze(cfg.stimuli{t}(s).regionPositions(r, :)));
+          scores(ur_id) = scores(ur_id) + delta_score;
         end
-      end
-      
+      end      
+
       % Find region with maximum score
       scores = scores / total;
       outside_score = 1 - sum(scores);
@@ -134,6 +147,17 @@ function [output, regionlabels] = vr_assignclusters(cfg, data)
       if(outside_score > score)
         roi_nr = 0;
         score = outside_score;
+      end
+      
+      if isempty(score)
+        roi_nr = 0;
+        score = outside_score;
+      end
+      
+      if roi_nr > 0
+        stim_nr = stims(roi_nr);
+      else
+        stim_nr = 0;
       end
       
       % Prepare information about this cluster
@@ -148,15 +172,15 @@ function [output, regionlabels] = vr_assignclusters(cfg, data)
       else
         stop_time = data.time{t}(clusters(c, 2));
       end;
-      
+
       cluster_info = [ ...
-        1, roi_nr, ...
-        frame_nrs(clusters(c, 1)), func(start_time), ...
-        frame_nrs(clusters(c, 2)), func(stop_time), ...
+        stim_nr, roi_nr, ...
+        -1, func(start_time), ...
+        -1, func(stop_time), ...
         func(stop_time - start_time), score];
       
-      if (stop_time - start_time) >= cfg.minimumfixationduration * 1000.0 * 1000.0
-        output.trials{t}(cluster_ptr, :) = cluster_info;
+      if (stop_time - start_time) >= cfg.minimumfixationduration * 1000.0 * 1000.0        
+        output.trials{t}(cluster_ptr, :) = cluster_info;        
         cluster_ptr = cluster_ptr + 1;
       end;
     end
