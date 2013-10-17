@@ -24,8 +24,8 @@ classdef Task4Logic < handle
         
         function obj = Task4Logic()
         end
-        
-        
+
+
         function data = parseStimulusMsgs(~, data)
             % Find the stimuli presented in each trial
             
