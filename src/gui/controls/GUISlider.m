@@ -7,7 +7,10 @@ classdef GUISlider < GUIComponent
         value;
         minValue;
         maxValue;
-                
+
+        minorStep;
+        majorStep;
+
         onChange;
     end
     
@@ -19,6 +22,8 @@ classdef GUISlider < GUIComponent
             obj.value = 0;
             obj.minValue = 0;
             obj.maxValue = 255;
+            obj.minorStep = NaN;
+            obj.majorStep = NaN;
             obj.onChange = {};
         end
 
@@ -35,6 +40,7 @@ classdef GUISlider < GUIComponent
                 
                 obj.setValue(obj.value);
                 obj.setBounds(obj.minValue, obj.maxValue);
+                obj.setStepSize(obj.minorStep, obj.majorStep);
             end
         end        
         
@@ -65,9 +71,33 @@ classdef GUISlider < GUIComponent
             if(obj.handle)
                 obj.value = get(obj.handle, 'Value');
             end
-            
+
             value = obj.value;
         end
+        
+        function setStepSize(obj, minor, major)                    
+          if nargin < 3
+            major = 10 * minor;
+          end
+          
+          obj.minorStep = minor;
+          obj.majorStep = major;
+          
+          if obj.handle
+            if isnan(obj.minorStep)
+              minor = 0.01 * (obj.maxValue - obj.minValue);
+            end
+            
+            if isnan(obj.majorStep)
+              major = 0.1 * (obj.maxValue - obj.minValue);
+            end
+
+            stepSize = [minor major] / (obj.maxValue - obj.minValue);            
+            stepSize = min(1, max(0, stepSize));            
+            
+            set(obj.handle, 'SliderStep', stepSize);
+          end
+        end        
         
         function setBounds(obj, minimum, maximum)
             obj.minValue = minimum;
@@ -76,8 +106,7 @@ classdef GUISlider < GUIComponent
             if(obj.handle)
                 set(obj.handle, 'Min', obj.minValue);
                 set(obj.handle, 'Max', obj.maxValue);
-                
-                set(obj.handle, 'SliderStep', [1 100] / (obj.maxValue - obj.minValue));
+                obj.setStepSize(obj.minorStep, obj.majorStep);
             end
         end
 

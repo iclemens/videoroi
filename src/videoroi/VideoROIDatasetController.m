@@ -82,16 +82,16 @@ classdef VideoROIDatasetController < handle
       col_y = find(strcmp(columns, 'R POR Y [px]'));
       
       obj.view.updateTrace( ...
-        samples(:, col_time), ...
+        samples(:, col_time) /1e6, ...
         samples(:, [col_x col_y]));
       
-      obj.view.setTotalTime(diff(samples([1 end], col_time)));
+      obj.view.setTotalTime(diff(samples([1 end], col_time)) / 1e6);
       obj.clearCache();
     end
     
     
     function onChangeTime(obj, ~, time)
-      stimuli = obj.dataset.getStimuliAtTime(obj.currentTrial, time);
+      stimuli = obj.dataset.getStimuliAtTime(obj.currentTrial, time * 1e6);
       
       % Append data for each stimulus
       for i = 1:numel(stimuli)
@@ -110,7 +110,7 @@ classdef VideoROIDatasetController < handle
         stimuli(i).data = I;
       end
       
-      % Ask view to update scene
+      % Ask view to update scene      
       obj.view.updateScreen(stimuli);
     end
   end

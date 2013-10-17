@@ -53,13 +53,13 @@ classdef VideoROIDatasetView < EventProvider
             set(obj.screenImage, 'XData', [1 obj.screenResolution(2)]);
             set(obj.screenImage, 'XData', [1 obj.screenResolution(1)]);
         end
-        
+                
         
         %
         % Set total time.
         %
         function setTotalTime(obj, totalTime)
-            obj.totalTime = totalTime * 1e-3;
+            obj.totalTime = totalTime;
             
             if obj.currentTime > obj.totalTime
                 obj.timeSlider.setValue(obj.totalTime);
@@ -104,10 +104,10 @@ classdef VideoROIDatasetView < EventProvider
                 delete(child(i));
             end
 
-            obj.offsetTime = time(1) * 1e-3;
-            time = time * 1e-3 - obj.offsetTime;
-            plot(h, time, position(:, 1) - nanmean(position(:, 1)), 'b');
-            plot(h, time, position(:, 2) - nanmean(position(:, 2)), 'r');
+            obj.offsetTime = time(1);
+            time = time - obj.offsetTime;
+            plot(h, time * 1e3, position(:, 1) - nanmean(position(:, 1)), 'b');
+            plot(h, time * 1e3, position(:, 2) - nanmean(position(:, 2)), 'r');
         end
         
         
@@ -173,8 +173,11 @@ classdef VideoROIDatasetView < EventProvider
             % Time control components
             obj.timeSlider = GUISlider();   % FIXME: Frames or seconds?!
             obj.timeSlider.addEventListener('change', @(x) obj.onTimeSliderChanged(x));
+            obj.timeSlider.setStepSize(0.25, 0.5);
+            
             obj.trialSlider = GUISlider();
             obj.trialSlider.addEventListener('change', @(src) obj.onTrialSliderChanged(src));
+            obj.trialSlider.setStepSize(1.0, 5.0);
             
             obj.playPauseButton = GUIButton();
             obj.playPauseButton.addEventListener('click', @(src) obj.onPlayPauseButtonClicked(src));
@@ -218,7 +221,7 @@ classdef VideoROIDatasetView < EventProvider
         function updateLabels(obj)
             obj.timeLabel.setLabel(sprintf( ...
                 'Time %.2f of %.2f sec / Trial %d of %d', ...
-                obj.currentTime * 1e-3, obj.totalTime * 1e-3, obj.currentTrial, obj.numberOfTrials));
+                obj.currentTime, obj.totalTime, obj.currentTrial, obj.numberOfTrials));
         end
         
 
@@ -263,11 +266,12 @@ classdef VideoROIDatasetView < EventProvider
         function onTimeSliderChanged(obj, src)
             value = src.getValue();
             obj.currentTime = value;
-            
+            obj.updateLabels();
+
             h = obj.traceAxes.getHandle();
-            xlim(h, value + [0 500]);
+            xlim(h, 1e3 * value + [0 500]);
             
-            obj.invokeEventListeners('changeTime', (obj.offsetTime + value) * 1e3);
+            obj.invokeEventListeners('changeTime', obj.offsetTime + value);
         end
 
 
