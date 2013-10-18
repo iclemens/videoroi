@@ -37,10 +37,13 @@ function VideoROIAnalysis(cfg)
       project = VideoROIProject(cfg.projectdirectory);
     end
     
+    taskName = project.getTaskName();
+    task = VideoROITaskFactory.obtainTaskInstance(taskName);
+    
     [outputFile, message] = fopen(cfg.outputfile, 'w');
     if(outputFile == -1), error(['could not open output file: ' message]); end
 
-    fprintf(outputFile, '"dataset", "stimulus", "roi_name", "roi", "f_fix_start", "t_fix_start", "f_fix_stop", "t_fix_stop", "fix_duration", "overlap"\r\n');
+    fprintf(outputFile, '"dataset", "trial", "roi_name", "roi", "f_fix_start", "t_fix_start", "f_fix_stop", "t_fix_stop", "fix_duration", "overlap"\r\n');
 
     numDatasets = project.getNumberOfDatasets();
     for d = 1:numDatasets
@@ -90,22 +93,23 @@ function VideoROIAnalysis(cfg)
         
         % Write fixations to file
         for t = 1:length(fixations.trials)
+            try
+              descr = task.getTrialDescription(stimuli{t});
+            catch e
+              e
+              descr = 'Unknown';
+            end
+            
             for c = 1:size(fixations.trials{t})
                 if fixations.trials{t}(c, 2) == 0
                     region_label = 'OutsideRegions';
                 else
                     region_label = regionlabels{t}{fixations.trials{t}(c, 2)};
                 end
-                
-                if fixations.trials{t}(c, 1) == 0
-                    stim_label = 'OutsideRegions';
-                else
-                    stim_label = stimuli{t}(fixations.trials{t}(c, 1)).name;
-                end
 
                 fprintf(outputFile, sprintf('"%s", "%s", "%s", %d, %d, %d, %d, %d, %d, %.2f\r\n', ...
                     dataset_info.name, ...
-                    stim_label, ...
+                    descr, ...
                     region_label, ...
                     fixations.trials{t}(c, 2), ...
                     fixations.trials{t}(c, 3), ...

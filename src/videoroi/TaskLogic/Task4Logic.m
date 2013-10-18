@@ -25,6 +25,22 @@ classdef Task4Logic < handle
         function obj = Task4Logic()
         end
 
+        
+        function descr = getTrialDescription(~, stimuli)
+          name = stimuli(1).name;
+          neg = ~isempty(strfind(name, 'NEG'));
+          pos = ~isempty(strfind(name, 'POS'));          
+          num = str2double(name(1:find(name == ' ', 1, 'first')));
+          
+          if neg && ~pos
+            descr = sprintf('%02d/NEG', num);
+          elseif ~neg && pos
+            descr = sprintf('%02d/POS', num);
+          else
+            descr = sprintf('%02d/???', num);
+          end
+        end        
+
 
         function data = parseStimulusMsgs(~, data)
             % Find the stimuli presented in each trial

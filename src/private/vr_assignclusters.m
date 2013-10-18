@@ -47,7 +47,7 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
       cfg.stimuli{t}(s).regionPositions = zeros(0, 1, 4);
       cfg.stimuli{t}(s).sceneChange = 0;
       cfg.stimuli{t}(s).regionLabels = {};
-
+      
       % Load regions and put into cache
       cacheIndex = strcmp(regionCache(:, 1), cfg.stimuli{t}(s).name);
       if any(cacheIndex)
@@ -138,12 +138,8 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
       total = clusters(c, 2) - clusters(c, 1) + 1;
       
       for s = 1:numel(cfg.stimuli{t})
-        % Determine samples valid for this stimulus
-        
-        onset = find(data.time{t} >= cfg.stimuli{t}(s).onset, 1, 'first');
-        offset = find(data.time{t} <= cfg.stimuli{t}(s).offset, 1, 'last');
-        
-        sel = max(onset, clusters(c, 1)):min(offset, clusters(c, 2));
+        % Determine samples valid for this stimulus                
+        sel = max(cfg.stimuli{t}(s).onset, clusters(c, 1)):min(cfg.stimuli{t}(s).offset, clusters(c, 2));
 
         % Don't bother if it is empty (outside of range)
         if isempty(sel), continue; end;
