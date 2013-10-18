@@ -43,6 +43,12 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
     for s = 1:numel(cfg.stimuli{t})
       stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli{t}(s).name);
 
+      % Initialize empty values in case stimulus could not be found/loaded
+      cfg.stimuli{t}(s).regionState = [];
+      cfg.stimuli{t}(s).regionPositions = zeros(0, 1, 4);
+      cfg.stimuli{t}(s).sceneChange = 0;
+      cfg.stimuli{t}(s).regionLabels = {};
+      
       if ~isstruct(stimulus_info)
         fprintf('Warning: Stimulus "%s" not found in dataset.\n', cfg.stimuli{t}(s).name);
         continue;
@@ -51,12 +57,12 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
       region_filename = cfg.project.getLatestROIFilename(stimulus_info);
       regions = VideoROIRegions(stimulus_info);
 
-      if(isempty(region_filename))
+      if isempty(region_filename)
         fprintf('Warning: No ROIs defined for stimulus %s.\n', stimulus_info.name);
         continue;
       end
 
-      if(~exist(region_filename, 'file'))
+      if ~exist(region_filename, 'file')
         fprintf('Warning: File %s does not exist', region_filename);
         continue;
       end
