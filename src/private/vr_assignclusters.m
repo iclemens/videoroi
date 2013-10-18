@@ -39,8 +39,8 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
   
   for t = 1:length(data.trials)
     uniqueRegions{t} = cell(1, 0);
-
-    % Load regions of interest for all stimuli    
+    
+    % Load regions of interest for all stimuli
     for s = 1:numel(cfg.stimuli{t})
       % Initialize empty values in case stimulus could not be found/loaded
       cfg.stimuli{t}(s).regionState = [];
@@ -51,7 +51,7 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
       % Load regions and put into cache
       cacheIndex = strcmp(regionCache(:, 1), cfg.stimuli{t}(s).name);
       if any(cacheIndex)
-        regions = regionCache{:, 2};        
+        regions = regionCache{cacheIndex, 2};        
       else
         stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli{t}(s).name);
 
@@ -115,6 +115,10 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
 
     nregions = numel(uniqueRegions{t});
     
+    if nregions == 0
+      fprintf('Warning: No regions defined in trial.\n');
+      continue;
+    end
     
     % Remove fixations after scene change
     for s = 1:length(cfg.stimuli{t})
@@ -140,11 +144,12 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
       for s = 1:numel(cfg.stimuli{t})
         % Determine samples valid for this stimulus                
         sel = max(cfg.stimuli{t}(s).onset, clusters(c, 1)):min(cfg.stimuli{t}(s).offset, clusters(c, 2));
-
+        
         % Don't bother if it is empty (outside of range)
         if isempty(sel), continue; end;
         
         for r = 1:numel(cfg.stimuli{t}(s).regionLabels)
+          cfg.stimuli{t}(s).regionState(r)
           % Skip invisible ID
           if ~cfg.stimuli{t}(s).regionState(r), continue; end;
           
