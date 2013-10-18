@@ -173,8 +173,9 @@ classdef VideoROIDatasetController < handle
         [stimulus, regions] = obj.loadStimulus(stimuli(i));
         
         if ~isempty(stimulus)
-          I = stimulus.readFrame(stimuli(i).frame);
-          [states, positions] = regions.getFrameInfo(stimuli(i).frame);
+          I = stimulus.readFrame(stimuli(i).frame + 1);
+          [states, positions] = regions.getFrameInfo(stimuli(i).frame + 1);
+          positions = vr_regiontoscreencoords(positions, struct('width', stimulus.getFrameWidth(), 'height', stimulus.getFrameHeight()), stimuli(i).position);
           stimuli(i).positions = positions(logical(states), :, :);
         else
           I = zeros(stimuli.position(3), stimuli.position(4), 3);
@@ -188,7 +189,7 @@ classdef VideoROIDatasetController < handle
         stimuli(i).data = I;
       end     
       
-      gaze = obj.dataset.getAnnotationsForTimeInterval(obj.currentTrial, time * 1e6, (time + 1/3) * 1e6, 'pixels');
+      gaze = obj.dataset.getAnnotationsForTimeInterval(obj.currentTrial, time * 1e6, (time + 1/30) * 1e6, 'pixels');
       
       % Ask view to update scene      
       obj.view.updateScreen(stimuli, gaze);

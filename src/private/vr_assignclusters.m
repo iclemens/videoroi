@@ -35,36 +35,56 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
   col_fixation_mask = strcmp(data.labels, 'fixation_mask');
   
   uniqueRegions = cell(1, length(data.trials));
+  regionCache = cell(0, 2);
   
   for t = 1:length(data.trials)
     uniqueRegions{t} = cell(1, 0);
     
-    % Load regions of interest for all stimuli    
+    % Load regions of interest for all stimuli
     for s = 1:numel(cfg.stimuli{t})
-      stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli{t}(s).name);
+      % Initialize empty values in case stimulus could not be found/loaded
+      cfg.stimuli{t}(s).regionState = [];
+      cfg.stimuli{t}(s).regionPositions = zeros(0, 1, 4);
+      cfg.stimuli{t}(s).sceneChange = 0;
+      cfg.stimuli{t}(s).regionLabels = {};
+      
+      % Load regions and put into cache
+      cacheIndex = strcmp(regionCache(:, 1), cfg.stimuli{t}(s).name);
+      if any(cacheIndex)
+        regions = regionCache{cacheIndex, 2};        
+      else
+        stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli{t}(s).name);
 
-      if ~isstruct(stimulus_info)
-        fprintf('Warning: Stimulus "%s" not found in dataset.\n', cfg.stimuli{t}(s).name);
-        continue;
+        if isstruct(stimulus_info)
+          region_filename = cfg.project.getLatestROIFilename(stimulus_info);
+          regions = VideoROIRegions(stimulus_info);
+
+          if isempty(region_filename)
+            fprintf('Warning: No ROIs defined for stimulus %s.\n', stimulus_info.name);
+            regions = [];
+          end
+
+          if ~exist(region_filename, 'file')
+            fprintf('Warning: File %s does not exist', region_filename);
+            regions = [];
+          end
+        
+          regions.loadRegionsFromFile(region_filename);        
+        else          
+          fprintf('Warning: Stimulus "%s" not found in dataset.\n', cfg.stimuli{t}(s).name);
+          regions = [];
+        end     
+      
+        % Check into region cache
+        regionCache{end + 1, 1} = cfg.stimuli{t}(s).name;
+        regionCache{end, 2} = regions;
       end
 
-      region_filename = cfg.project.getLatestROIFilename(stimulus_info);
-      regions = VideoROIRegions(stimulus_info);
-
-      if(isempty(region_filename))
-        fprintf('Warning: No ROIs defined for stimulus %s.\n', stimulus_info.name);
-        continue;
-      end
-
-      if(~exist(region_filename, 'file'))
-        fprintf('Warning: File %s does not exist', region_filename);
-        continue;
-      end
-
-      regions.loadRegionsFromFile(region_filename);
+      if isempty(regions), continue; end;
+            
+      % Copy into stimulus structure
       nregions = regions.getNumberOfRegions();
-
-      [roiState, roiPosition, sceneChange] = regions.getFrameInfo(cfg.stimuli{t}(s).frame);      
+      [roiState, roiPosition, sceneChange] = regions.getFrameInfo(cfg.stimuli{t}(s).frame + 1);
       
       cfg.stimuli{t}(s).regionLabels = cell(1, nregions);
       for r = 1:nregions
@@ -79,22 +99,15 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
       cfg.stimuli{t}(s).sceneChange = sceneChange;
       cfg.stimuli{t}(s).regionPositions = roiPosition;
       
-      % Convert region positions into screen coordinates
-      for r = 1:nregions
-        cfg.stimuli{t}(s).regionPositions(r, 1, 1) = cfg.stimuli{t}(s).regionPositions(r, 1, 1) .* ...
-          cfg.stimuli{t}(s).position(3) / stimulus_info.width + cfg.stimuli{t}(s).position(1);
-        cfg.stimuli{t}(s).regionPositions(r, 1, 3) = cfg.stimuli{t}(s).regionPositions(r, 1, 3) .* ...
-          cfg.stimuli{t}(s).position(3) / stimulus_info.width;
-        
-        cfg.stimuli{t}(s).regionPositions(r, 1, 2) = cfg.stimuli{t}(s).regionPositions(r, 1, 2) .* ...
-          cfg.stimuli{t}(s).position(4) / stimulus_info.height + cfg.stimuli{t}(s).position(2);
-        cfg.stimuli{t}(s).regionPositions(r, 1, 4) = cfg.stimuli{t}(s).regionPositions(r, 1, 4) .* ...        
-          cfg.stimuli{t}(s).position(4) / stimulus_info.height;
-      end      
+      cfg.stimuli{t}(s).regionPositions = vr_regiontoscreencoords(cfg.stimuli{t}(s).regionPositions, stimulus_info, cfg.stimuli{t}(s).position);      
     end
 
     nregions = numel(uniqueRegions{t});
     
+    if nregions == 0
+      fprintf('Warning: No regions defined in trial.\n');
+      continue;
+    end
     
     % Remove fixations after scene change
     for s = 1:length(cfg.stimuli{t})
@@ -112,17 +125,15 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
     output.trials{t} = nan(size(clusters, 1), length(output.labels));
     cluster_ptr = 1;
     
-    for c = 1:size(clusters, 1)
-      %cluster_indices = clusters(c, 1):clusters(c, 2);
-      
+    for c = 1:size(clusters, 1)      
       % Compute score for every region
       scores = zeros(numel(cfg.stimuli{t}), nregions);
       total = clusters(c, 2) - clusters(c, 1) + 1;
       
       for s = 1:numel(cfg.stimuli{t})
-        % Determine samples valid for this stimulus               
+        % Determine samples valid for this stimulus                
         sel = max(cfg.stimuli{t}(s).onset, clusters(c, 1)):min(cfg.stimuli{t}(s).offset, clusters(c, 2));
-
+        
         % Don't bother if it is empty (outside of range)
         if isempty(sel), continue; end;
         
@@ -139,10 +150,13 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
           scores(s, ur_id) = scores(s, ur_id) + delta_score;
         end
       end
-
+      
+      start_stim = -1;
+      stop_stim = -1;      
+      
       if isempty(scores)
         roi_nr = 0;
-        stim_nr = 0;
+        stim_nr = 0;               
         score = NaN;
       else      
         score_by_region = sum(scores) / total;
@@ -156,9 +170,13 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
           roi_nr = 0;
           score = outside_score;
         else
+          tmp = find(sum(scores, 2) > 0);
+          start_stim = tmp(1);
+          stop_stim = tmp(end);
+          
           [~, stim_nr] = max(scores(:, roi_nr));
         end
-      end
+      end            
       
       % Prepare information about this cluster
       if(clusters(c, 1) > 1)
@@ -175,8 +193,8 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
 
       cluster_info = [ ...
         stim_nr, roi_nr, ...
-        -1, func(start_time), ...
-        -1, func(stop_time), ...
+        start_stim, func(start_time), ...
+        stop_stim, func(stop_time), ...
         func(stop_time - start_time), score];
       
       if (stop_time - start_time) >= cfg.minimumfixationduration * 1000.0 * 1000.0        
