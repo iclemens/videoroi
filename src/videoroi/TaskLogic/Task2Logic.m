@@ -31,8 +31,24 @@ classdef Task2Logic < handle
         
         function obj = Task2Logic()
         end
-        
-        
+
+
+        function descr = getTrialDescription(~, stimuli)
+          name = lower(stimuli(1).name);
+          
+          try
+            tokens = regexp(name, '[a-z]+[0-9]+_([0-9]+)_([a-z]+)_([a-z]+)_([a-z]+)', 'tokens');
+            tokens = tokens{1};
+          
+            num = str2double(tokens{1});
+          
+            descr = sprintf('%02d/%s/%s', num, tokens{2}, tokens{3});
+          catch e
+            descr = name;
+          end
+        end
+
+
         function data = parseStimulusMsgs(~, data)            
             expr = 'Picture: Left: ([0-9]*) top: ([0-9]*) Name: ([^\s])*';
 
