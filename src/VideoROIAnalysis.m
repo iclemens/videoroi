@@ -96,7 +96,6 @@ function VideoROIAnalysis(cfg)
             try
               descr = task.getTrialDescription(stimuli{t});
             catch e
-              e
               descr = 'Unknown';
             end
             

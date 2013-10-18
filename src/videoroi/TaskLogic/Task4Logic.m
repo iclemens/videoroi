@@ -27,18 +27,28 @@ classdef Task4Logic < handle
 
         
         function descr = getTrialDescription(~, stimuli)
-          name = stimuli(1).name;
-          neg = ~isempty(strfind(name, 'NEG'));
-          pos = ~isempty(strfind(name, 'POS'));          
-          num = str2double(name(1:find(name == ' ', 1, 'first')));
+          name = lower(stimuli(1).name);
+          neg = ~isempty(strfind(name, ' neg '));
+          pos = ~isempty(strfind(name, ' pos '));
+          src = name(1:find(name == ' ', 1, 'first') - 1);
+          
+          num = str2double(src);
+          
+          if isnan(num)
+            num = src;
+          else
+            num = sprintf('%02d', num);
+          end
           
           if neg && ~pos
-            descr = sprintf('%02d/NEG', num);
+            pn = 'NEG';
           elseif ~neg && pos
-            descr = sprintf('%02d/POS', num);
+            pn = 'POS';
           else
-            descr = sprintf('%02d/???', num);
+            pn = '???';
           end
+          
+          descr = sprintf('%s/%s', num, pn);
         end        
 
 
