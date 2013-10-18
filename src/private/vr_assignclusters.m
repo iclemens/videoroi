@@ -35,42 +35,56 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
   col_fixation_mask = strcmp(data.labels, 'fixation_mask');
   
   uniqueRegions = cell(1, length(data.trials));
+  regionCache = cell(0, 2);
   
   for t = 1:length(data.trials)
     uniqueRegions{t} = cell(1, 0);
-    
+
     % Load regions of interest for all stimuli    
     for s = 1:numel(cfg.stimuli{t})
-      stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli{t}(s).name);
-
       % Initialize empty values in case stimulus could not be found/loaded
       cfg.stimuli{t}(s).regionState = [];
       cfg.stimuli{t}(s).regionPositions = zeros(0, 1, 4);
       cfg.stimuli{t}(s).sceneChange = 0;
       cfg.stimuli{t}(s).regionLabels = {};
+
+      % Load regions and put into cache
+      cacheIndex = strcmp(regionCache(:, 1), cfg.stimuli{t}(s).name);
+      if any(cacheIndex)
+        regions = regionCache{:, 2};        
+      else
+        stimulus_info = get_stimulus_info(cfg.project, cfg.stimuli{t}(s).name);
+
+        if isstruct(stimulus_info)
+          region_filename = cfg.project.getLatestROIFilename(stimulus_info);
+          regions = VideoROIRegions(stimulus_info);
+
+          if isempty(region_filename)
+            fprintf('Warning: No ROIs defined for stimulus %s.\n', stimulus_info.name);
+            regions = [];
+          end
+
+          if ~exist(region_filename, 'file')
+            fprintf('Warning: File %s does not exist', region_filename);
+            regions = [];
+          end
+        
+          regions.loadRegionsFromFile(region_filename);        
+        else          
+          fprintf('Warning: Stimulus "%s" not found in dataset.\n', cfg.stimuli{t}(s).name);
+          regions = [];
+        end     
       
-      if ~isstruct(stimulus_info)
-        fprintf('Warning: Stimulus "%s" not found in dataset.\n', cfg.stimuli{t}(s).name);
-        continue;
+        % Check into region cache
+        regionCache{end + 1, 1} = cfg.stimuli{t}(s).name;
+        regionCache{end, 2} = regions;
       end
 
-      region_filename = cfg.project.getLatestROIFilename(stimulus_info);
-      regions = VideoROIRegions(stimulus_info);
-
-      if isempty(region_filename)
-        fprintf('Warning: No ROIs defined for stimulus %s.\n', stimulus_info.name);
-        continue;
-      end
-
-      if ~exist(region_filename, 'file')
-        fprintf('Warning: File %s does not exist', region_filename);
-        continue;
-      end
-
-      regions.loadRegionsFromFile(region_filename);
+      if isempty(regions), continue; end;
+            
+      % Copy into stimulus structure
       nregions = regions.getNumberOfRegions();
-
-      [roiState, roiPosition, sceneChange] = regions.getFrameInfo(cfg.stimuli{t}(s).frame);      
+      [roiState, roiPosition, sceneChange] = regions.getFrameInfo(cfg.stimuli{t}(s).frame + 1);
       
       cfg.stimuli{t}(s).regionLabels = cell(1, nregions);
       for r = 1:nregions
@@ -118,16 +132,18 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
     output.trials{t} = nan(size(clusters, 1), length(output.labels));
     cluster_ptr = 1;
     
-    for c = 1:size(clusters, 1)
-      %cluster_indices = clusters(c, 1):clusters(c, 2);
-      
+    for c = 1:size(clusters, 1)      
       % Compute score for every region
       scores = zeros(numel(cfg.stimuli{t}), nregions);
       total = clusters(c, 2) - clusters(c, 1) + 1;
       
       for s = 1:numel(cfg.stimuli{t})
-        % Determine samples valid for this stimulus               
-        sel = max(cfg.stimuli{t}(s).onset, clusters(c, 1)):min(cfg.stimuli{t}(s).offset, clusters(c, 2));
+        % Determine samples valid for this stimulus
+        
+        onset = find(data.time{t} >= cfg.stimuli{t}(s).onset, 1, 'first');
+        offset = find(data.time{t} <= cfg.stimuli{t}(s).offset, 1, 'last');
+        
+        sel = max(onset, clusters(c, 1)):min(offset, clusters(c, 2));
 
         % Don't bother if it is empty (outside of range)
         if isempty(sel), continue; end;
