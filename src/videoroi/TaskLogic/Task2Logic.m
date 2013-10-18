@@ -61,7 +61,7 @@ classdef Task2Logic < handle
                         height = 350;                        
 
                         data(t).stimulus(s).name = tokens{p}{3};
-                        data(t).stimulus(s).frame = 1;
+                        data(t).stimulus(s).frame = 0;
                         data(t).stimulus(s).onset = onset;
                         data(t).stimulus(s).offset = offset;
                         data(t).stimulus(s).position = [top left width height];
