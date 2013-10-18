@@ -99,18 +99,7 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
       cfg.stimuli{t}(s).sceneChange = sceneChange;
       cfg.stimuli{t}(s).regionPositions = roiPosition;
       
-      % Convert region positions into screen coordinates
-      for r = 1:nregions
-        cfg.stimuli{t}(s).regionPositions(r, 1, 1) = cfg.stimuli{t}(s).regionPositions(r, 1, 1) .* ...
-          cfg.stimuli{t}(s).position(3) / stimulus_info.width + cfg.stimuli{t}(s).position(1);
-        cfg.stimuli{t}(s).regionPositions(r, 1, 3) = cfg.stimuli{t}(s).regionPositions(r, 1, 3) .* ...
-          cfg.stimuli{t}(s).position(3) / stimulus_info.width;
-        
-        cfg.stimuli{t}(s).regionPositions(r, 1, 2) = cfg.stimuli{t}(s).regionPositions(r, 1, 2) .* ...
-          cfg.stimuli{t}(s).position(4) / stimulus_info.height + cfg.stimuli{t}(s).position(2);
-        cfg.stimuli{t}(s).regionPositions(r, 1, 4) = cfg.stimuli{t}(s).regionPositions(r, 1, 4) .* ...        
-          cfg.stimuli{t}(s).position(4) / stimulus_info.height;
-      end      
+      cfg.stimuli{t}(s).regionPositions = vr_regiontoscreencoords(cfg.stimuli{t}(s).regionPositions, stimulus_info, cfg.stimuli{t}(s).position);      
     end
 
     nregions = numel(uniqueRegions{t});
@@ -149,7 +138,6 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
         if isempty(sel), continue; end;
         
         for r = 1:numel(cfg.stimuli{t}(s).regionLabels)
-          cfg.stimuli{t}(s).regionState(r)
           % Skip invisible ID
           if ~cfg.stimuli{t}(s).regionState(r), continue; end;
           
@@ -162,10 +150,13 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
           scores(s, ur_id) = scores(s, ur_id) + delta_score;
         end
       end
-
+      
+      start_stim = -1;
+      stop_stim = -1;      
+      
       if isempty(scores)
         roi_nr = 0;
-        stim_nr = 0;
+        stim_nr = 0;               
         score = NaN;
       else      
         score_by_region = sum(scores) / total;
@@ -179,9 +170,13 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
           roi_nr = 0;
           score = outside_score;
         else
+          tmp = find(sum(scores, 2) > 0);
+          start_stim = tmp(1);
+          stop_stim = tmp(end);
+          
           [~, stim_nr] = max(scores(:, roi_nr));
         end
-      end
+      end            
       
       % Prepare information about this cluster
       if(clusters(c, 1) > 1)
@@ -198,8 +193,8 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
 
       cluster_info = [ ...
         stim_nr, roi_nr, ...
-        -1, func(start_time), ...
-        -1, func(stop_time), ...
+        start_stim, func(start_time), ...
+        stop_stim, func(stop_time), ...
         func(stop_time - start_time), score];
       
       if (stop_time - start_time) >= cfg.minimumfixationduration * 1000.0 * 1000.0        
