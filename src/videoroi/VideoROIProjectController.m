@@ -73,6 +73,7 @@ classdef VideoROIProjectController < handle
       % Try to create a new project
       try
         obj.project = VideoROIProject(projectDirectory);
+        obj.view.setProjectOpen();
         obj.view.updateOverlapState(obj.project.getOverlapState());
       catch err
         obj.view.displayError(err.message);
@@ -90,6 +91,7 @@ classdef VideoROIProjectController < handle
       % Try to open the project
       try
         obj.project = VideoROIProject(projectDirectory);
+        obj.view.setProjectOpen();
         obj.view.updateOverlapState(obj.project.getOverlapState());
         obj.updateStimulusList();
         obj.updateDatasetList();
@@ -102,6 +104,7 @@ classdef VideoROIProjectController < handle
     % Close the currently open project.
     function onCloseProject(obj, ~)
       obj.project = [];
+      obj.view.resetProjectOpen();
       obj.view.updateStimulusList({});
       obj.view.updateDatasetList({});
     end
@@ -158,30 +161,30 @@ classdef VideoROIProjectController < handle
   methods(Access = private)
     % Add dataset to project.
     function onAddDataset(obj, ~, filename)
-      if(~isempty(obj.project))
-        try
-          obj.project.addDataset(filename);
-          obj.updateDatasetList();
-        catch err
-          obj.view.displayError(err.message);
-        end
-      else
+      if ~isa(obj.project, 'VideoROIProject')
         error('VideoROI:NoProjectLoaded', 'No project loaded, unable to add dataset');
+      end
+        
+      try
+        obj.project.addDataset(filename);
+        obj.updateDatasetList();
+      catch err
+        obj.view.displayError(err.message);
       end
     end
     
     
     % Add stimulus to project.
     function onAddStimulus(obj, ~, filename)
-      if(~isempty(obj.project))
-        try
-          obj.project.addStimulus(filename);
-          obj.updateStimulusList();
-        catch err
-          obj.view.displayError(err.message);
-        end
-      else
+      if ~isa(obj.project, 'VideoROIProject')
         error('VideoROI:NoProjectLoaded', 'No project loaded, unable to add stimulus');
+      end
+
+      try
+        obj.project.addStimulus(filename);
+        obj.updateStimulusList();
+      catch err
+        obj.view.displayError(err.message);
       end
     end
     

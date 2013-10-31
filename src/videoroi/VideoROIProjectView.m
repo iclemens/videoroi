@@ -24,6 +24,16 @@ classdef VideoROIProjectView < EventProvider
         end
 
         
+        function setProjectOpen(obj)
+            obj.projectOpen = true;
+        end
+        
+        
+        function resetProjectOpen(obj)
+            obj.projectOpen = false;
+        end;
+        
+        
         %
         % Update list of available tasks.
         %
@@ -122,7 +132,7 @@ classdef VideoROIProjectView < EventProvider
         
         unsavedFlag;
         overlapState;
-        currentProjectPath = '';
+        projectOpen;
     end    
     
     methods(Access = private)
@@ -208,7 +218,6 @@ classdef VideoROIProjectView < EventProvider
             
             if(projectDirectory ~= 0)
                 obj.invokeEventListeners('newProject', projectDirectory);
-                obj.currentProjectPath = projectDirectory;
             end
         end
 
@@ -221,17 +230,15 @@ classdef VideoROIProjectView < EventProvider
             
             if(projectDirectory ~= 0)
                 obj.invokeEventListeners('openProject', projectDirectory);
-                obj.currentProjectPath = projectDirectory;
             end
-        end
-        
-        
+        end               
+
+
         %
         % Function called when a project is to be closed
         %        
         function onCloseProject(obj, ~)
             obj.invokeEventListeners('closeProject');
-            obj.currentProjectPath = '';
         end        
         
         
@@ -274,8 +281,7 @@ classdef VideoROIProjectView < EventProvider
         % Function called when adding a stimulus to the project
         %
         function onAddStimulus(obj, ~)
-            if(obj.currentProjectPath ~= 0)
-                
+            if obj.projectOpen
                 fileTypes = {'*.wmv', 'Video files'; '*.jpg', 'Image files'};
                 
                 [filenames, pathname] = uigetfile( ...
@@ -328,7 +334,7 @@ classdef VideoROIProjectView < EventProvider
         % Function called when adding a dataset to the project
         %        
         function onAddDataset(obj, ~)
-            if(obj.currentProjectPath ~= 0)                
+            if obj.projectOpen
                 [filenames, pathname] = uigetfile( ...
                     {'*.txt', 'Datasets'}, 'Add dataset', ...
                     'MultiSelect', 'On');
