@@ -2,9 +2,9 @@ function VideoROIAnalysis(cfg)
 %
 % Performs the ROI analysis.
 %
-%  cfg.projectDirectory  specifies the project data to be analyzed
-%  cfg.outputFile  specifies where the output should be written to
-%  cfg.units  specifies the time-units used (us, ms, or s)
+%  cfg.projectDirectory  specifies the project data to be analyzed.
+%  cfg.outputFile  specifies where the output should be written to.
+%  cfg.units  specifies the time-units used (us, ms, or s).
 %  cfg.ignoreafterscenechange  Amount of time (in seconds) to ignore after a scene has changed.
 %  cfg.minimumfixationduration  Minimum duration (in seconds) of a fixation.
 %
@@ -61,7 +61,7 @@ function VideoROIAnalysis(cfg)
             [samples, columns] = dataset.getAnnotationsForTrial(t);
             data.time{t} = samples(:, 1);
             data.trials{t} = samples(:, 2:end);
-        end;       
+        end
 
         if strcmp(cfg.method, 'highest_score')
             scfg = [];
@@ -89,7 +89,7 @@ function VideoROIAnalysis(cfg)
             fixations = vr_clusterfixations(scfg, output);
         else
             error('Unknown ROI assignment method specified.');
-        end;
+        end
         
         % Write fixations to file
         for t = 1:length(fixations.trials)
@@ -118,9 +118,9 @@ function VideoROIAnalysis(cfg)
                     fixations.trials{t}(c, 7), ...
                     fixations.trials{t}(c, 8)));
                 
-            end;
-        end;
-        
+            end
+        end
+
     end
 
     % Close output
