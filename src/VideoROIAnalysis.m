@@ -63,30 +63,23 @@ function VideoROIAnalysis(cfg)
             data.trials{t} = samples(:, 2:end);
         end
 
+        scfg = [];
+        scfg.project = project;
+        scfg.stimuli = stimuli;
+        scfg.units = cfg.units;
+        scfg.ignoreafterscenechange = cfg.ignoreafterscenechange;
+        scfg.minimumfixationduration = cfg.minimumfixationduration;
+ 
         if strcmp(cfg.method, 'highest_score')
-            scfg = [];
-            scfg.project = project;
-            scfg.units = cfg.units;
-            scfg.ignoreafterscenechange = cfg.ignoreafterscenechange;
-            scfg.minimumfixationduration = cfg.minimumfixationduration;
-            scfg.stimuli = stimuli;
-
             [fixations, regionlabels] = vr_assignclusters(scfg, data);
-        elseif strcmp(cfg.method, 'sub_fixation')       
+        elseif strcmp(cfg.method, 'sub_fixation')
             % Assign regions to samples
-            scfg = [];
-            scfg.project = project;
-            scfg.ignoreafterscenechange = cfg.ignoreafterscenechange;
-            scfg.minimumfixationduration = cfg.minimumfixationduration;        
-            scfg.stimuli = stimuli;
             [output, regionlabels] = vr_assignregions(scfg, data);
 
             % Cluster fixations by region
-            scfg = [];
-            scfg.outputfile = outputFile;
-            scfg.units = cfg.units;
-            scfg.minimumfixationduration = cfg.minimumfixationduration;
-            fixations = vr_clusterfixations(scfg, output);
+            lcfg = scfg;
+            lcfg.outputFile = outputFile;
+            fixations = vr_clusterfixations(lcfg, output);
         else
             error('Unknown ROI assignment method specified.');
         end
