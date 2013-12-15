@@ -323,9 +323,15 @@ classdef VideoROIDataset < handle
                 
                 time = obj.data(t).samples(:, col_time) * 1e-6;
                 gaze = obj.data(t).samples(:, col_gaze);
-                
-                events = detectFunc(edcfg, time, gaze);
 
+                % Only detect events if there are two or more samples.
+                if(size(obj.data(t).samples, 1) >= 2)
+                  events = detectFunc(edcfg, time, gaze);
+                else
+                  events = struct();
+                end
+
+                % Convert detected events into masks
                 if isfield(events, 'saccades')
                     obj.data(t).saccade_mask = idf_mask_cluster(events.saccades, length(time));
                 else
