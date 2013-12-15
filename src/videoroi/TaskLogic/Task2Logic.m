@@ -64,8 +64,8 @@ classdef Task2Logic < handle
                     s = 1;
                     
                     for p = 1:length(tokens)
-                        top = str2double(tokens{p}{1});
-                        left = str2double(tokens{p}{2});
+                        left = str2double(tokens{p}{1});
+                        top = str2double(tokens{p}{2});
                         width = 232;
                         height = 350;                        
 
@@ -73,7 +73,7 @@ classdef Task2Logic < handle
                         data(t).stimulus(s).frame = 0;
                         data(t).stimulus(s).onset = onset;
                         data(t).stimulus(s).offset = offset;
-                        data(t).stimulus(s).position = [top left width height];
+                        data(t).stimulus(s).position = [left top width height];
 
                         s = s + 1;
                     end                    
