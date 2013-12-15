@@ -1,13 +1,6 @@
 classdef Task3Logic < handle
 %
-% Implements logic specific to Gerine her fourth experiment.
-%
-% Left 276 516 (diff 240)
-% Top 34 384 (diff 350)
-%
-% Image = 350x232
-%
-% 1024 x 768
+% Implements logic specific to Gerine her third experiment.
 %
 
     % Settings
