@@ -100,10 +100,19 @@ classdef VideoROIDataset < handle
         end
         
         
+        % Return all stimuli for a given trial
         function stimuli = getStimuliForTrial(obj, trialId)
             stimuli = obj.data(trialId).stimulus;
+        end       
+
+
+        % Returns a textual description for a given trial
+        % If no task is set, this function will fail.
+        function descr = getDescriptionForTrial(obj, trialId)
+          task = VideoROITaskFactory.obtainTaskInstance(obj.taskName);
+          descr = task.getTrialDescription(obj.data(trialId).stimulus);
         end
-        
+
 
         %
         % Returns the stimuli being presented at a given point in time.
@@ -219,7 +228,7 @@ classdef VideoROIDataset < handle
             
             % Perform task specific message parsing
             if(~isempty(obj.taskName))
-                task = VideoROITaskFactory.obtainTaskInstance(obj.taskName);            
+                task = VideoROITaskFactory.obtainTaskInstance(obj.taskName);
                 data = task.parseStimulusMsgs(data);
             end
             
