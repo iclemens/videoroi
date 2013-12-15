@@ -1,6 +1,10 @@
 function VideoROITool(projectDir)
-% VIDEOROITOOL allows one to define regions-of-interest
-%  in movie frames.
+% VIDEOROITOOL Define regions-of-interest in both movie frames
+% as well as images.
+%
+% VideoRoiTool(projectDir) uses projectDir instead of asking
+% for a project direcotry on startup.
+% 
 
     vr_initialize();
 
