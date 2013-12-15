@@ -66,25 +66,25 @@ classdef Task1Logic < handle
                     % The "End of Picture" message is always the one immediately after the "Picture" message.
                     [~, offset] = min(abs(data(t).samples(:, 1) - double(data(t).messages(m + 1).time)));
                     
-                    % Check that to be sure
-                    if ~strcmp(data(t).messages(m + 1).message, 'End of Picture')
+                    % Check that to be sure                    
+                    if ~strcmp(data(t).messages(m + 1).message, '# Message: End of Picture')
                       error('Found "%s" message instead of "End of Picture".', data(t).messages(m + 1).message);
                     end
                     
                     s = 1;
                     
                     for p = 1:length(tokens)
-                        top = str2double(tokens{p}{1});
-                        left = str2double(tokens{p}{2});
-                        width = 232;
-                        height = 350;                        
+                        left = str2double(tokens{p}{1});
+                        top = str2double(tokens{p}{2});
+                        width = 465;
+                        height = 700;                        
 
                         data(t).stimulus(s).name = tokens{p}{3};
                         data(t).stimulus(s).frame = 0;
                         data(t).stimulus(s).onset = onset;
                         data(t).stimulus(s).offset = offset;
-                        data(t).stimulus(s).position = [top left width height];
-
+                        data(t).stimulus(s).position = [left top width height];
+                        
                         s = s + 1;
                     end                    
                 end
