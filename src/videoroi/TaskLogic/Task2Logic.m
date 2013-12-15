@@ -2,6 +2,17 @@ classdef Task2Logic < handle
 %
 % Implements logic specific to Gerine her second experiment.
 %
+% Usual image locations:
+%  (Left, Top) = (276, 34)
+%  (Left, Top) = (516, 34)
+%  (Left, Top) = (276, 384)
+%  (Left, Top) = (516, 384)
+%
+% Image dimensions (Width, Height) = (232, 350)
+%
+% X = 1024 = 276 | [232] | 8 | [232] | 276
+% Y =  768 =  34 | [350] | 0 | [350] | 34
+%
 
     % Settings
     properties(Access = private)
