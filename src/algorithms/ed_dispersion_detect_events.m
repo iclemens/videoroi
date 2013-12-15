@@ -21,6 +21,8 @@ function events = ed_dispersion_detect_events(cfg, time, gaze)
 
     % Compute frequency and window-size
     if ~isfield(cfg, 'frequency'), cfg.frequency = 1 / median(diff(time)); end;
+    if ~vr_checkfrequency(cfg, 'frequency'), error('Invalid frequency.'); end;
+    
     window_size = ceil(cfg.frequency * cfg.minimum_fixation_duration);
 
     if debug, fprintf('Window size: %d; frequency %.2f\n', window_size, cfg.frequency); end;

@@ -21,7 +21,7 @@ function [pos, vel, acc] = ed_filter(cfg, pos)
   if ~isfield(cfg, 'frequency'), error('No frequency specified'); end;
   if ~isfield(cfg, 'minimum_saccade_duration'), cfg.minimum_saccade_duration = 0.010; end;  
   
-  if ~(isreal(cfg.frequency) && ~isnan(cfg.frequency))
+  if ~vr_checkfrequency(cfg.frequency)
     error('Invalid frequency specified');
   end;
   

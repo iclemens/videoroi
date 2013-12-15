@@ -1,10 +1,19 @@
 function events = ed_velocity_detect_events(cfg, time, data)
-    
+%
+% Detects events based on a velocity criterion.
+%
+%  cfg - Configuration structure
+%  time - Time (in seconds)
+%  data - ...
+%
+  
     events = struct();
+
+    if ~isfield(cfg, 'frequency'), cfg.frequency = 1 / median(diff(time)); end;
+    if ~vr_checkfrequency(cfg.frequency), error('Invalid frequency'); end;
     
-    if ~isfield(cfg, 'frequency'), cfg.frequency = 1 / (time(2) - time(1)); end;
     data = ed_filter(cfg, data);
-    
+
     events.saccades = ed_vel_find_saccades(cfg, time, data);
     saccade_mask = idf_mask_cluster(events.saccades, length(time));
     
@@ -19,5 +28,5 @@ function events = ed_velocity_detect_events(cfg, time, data)
         % Remove fixation which do not meet minimum duration
         fixation_time = sample_time * diff(events.fixations, [], 2);        
         events.fixations(fixation_time < cfg.minimum_fixation_duration, :) = [];                
-    end    
+    end
 end
