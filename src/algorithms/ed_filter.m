@@ -20,14 +20,22 @@ function [pos, vel, acc] = ed_filter(cfg, pos)
 
   if ~isfield(cfg, 'frequency'), error('No frequency specified'); end;
   if ~isfield(cfg, 'minimum_saccade_duration'), cfg.minimum_saccade_duration = 0.010; end;  
-
+  
+  if ~(isreal(cfg.frequency) && ~isnan(cfg.frequency))
+    error('Invalid frequency specified');
+  end;
+  
+  if ~(isreal(cfg.minimum_saccade_duration) && ~isnan(cfg.minimum_saccade_duration))
+    error('Invalid minimum saccade duration specified'); 
+  end;
+  
   n = size(pos, 1);
   
   % SG filter settings
   sg_span = ceil(cfg.minimum_saccade_duration * cfg.frequency); % Span of filter
   sg_order = 2;                                                 % Order of polynomial fit
-  sg_win = 2 * ceil(sg_span) - 1;                               % Window length
-      
+  sg_win = 2 * ceil(sg_span) - 1;                               % Window length    
+  
   [~, g] = sgolay(sg_order, sg_win);
        
   % Compute acceleration and velocity per component
