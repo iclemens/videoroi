@@ -1,9 +1,9 @@
 function VideoROIAnalysis(cfg)
+% VIDEOROIANALYSIS assigns fixations to regions of interest. This is done for all datasets in the project.
 %
-% Performs the ROI analysis.
-%
-%  cfg.projectDirectory  specifies the project data to be analyzed.
-%  cfg.outputFile  specifies where the output should be written to.
+% The first parameter, cfg, should be a struct containing:
+%  cfg.projectdirectory  specifies the project data to be analyzed.
+%  cfg.outputfile  specifies where the output should be written to.
 %  cfg.units  specifies the time-units used (us, ms, or s).
 %  cfg.ignoreafterscenechange  Amount of time (in seconds) to ignore after a scene has changed.
 %  cfg.minimumfixationduration  Minimum duration (in seconds) of a fixation.
