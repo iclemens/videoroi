@@ -61,15 +61,11 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
 
           if isempty(region_filename)
             fprintf('Warning: No ROIs defined for stimulus %s.\n', stimulus_info.name);
-            regions = [];
+          elseif ~exist(region_filename, 'file')            
+            fprintf('Warning: File "%s" does not exist', region_filename);
+          else
+            regions.loadRegionsFromFile(region_filename);
           end
-
-          if ~exist(region_filename, 'file')
-            fprintf('Warning: File %s does not exist', region_filename);
-            regions = [];
-          end
-        
-          regions.loadRegionsFromFile(region_filename);        
         else          
           fprintf('Warning: Stimulus "%s" not found in dataset.\n', cfg.stimuli{t}(s).name);
           regions = [];
