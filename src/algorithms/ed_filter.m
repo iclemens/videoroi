@@ -35,7 +35,7 @@ function [pos, vel, acc] = ed_filter(cfg, pos)
   sg_span = ceil(cfg.minimum_saccade_duration * cfg.frequency); % Span of filter
   sg_order = 2;                                                 % Order of polynomial fit
   sg_win = 2 * ceil(sg_span) - 1;                               % Window length    
-  
+
   [~, g] = sgolay(sg_order, sg_win);
        
   % Compute acceleration and velocity per component

@@ -333,10 +333,14 @@ classdef VideoROIDataset < handle
                 time = obj.data(t).samples(:, col_time) * 1e-6;
                 gaze = obj.data(t).samples(:, col_gaze);
 
-                % Only detect events if there are two or more samples.
-                if(size(obj.data(t).samples, 1) >= 2)
+                % Event detection might fail when there are not enough samples.
+                try
                   events = detectFunc(edcfg, time, gaze);
-                else
+                catch
+                  % Only show warning if the trial contains more than 50 samples
+                  if numel(time) > 50
+                    fprintf('Warning: Skipping event detection for trial with more than 50 (%d) samples.', numel(time));
+                  end
                   events = struct();
                 end
 
