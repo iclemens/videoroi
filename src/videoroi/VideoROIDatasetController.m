@@ -64,7 +64,7 @@ classdef VideoROIDatasetController < handle
       stimInfo = obj.project.getInfoForStimulus(filename);
       
       if ~isstruct(stimInfo)
-        warning('Invalid stimulus specified (%s)', filename);
+        warning('Invalid stimulus specified, filename = "%s".', filename);
         stim = [];
         regs = [];
         return;
