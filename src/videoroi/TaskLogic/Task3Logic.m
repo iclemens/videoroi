@@ -42,13 +42,17 @@ classdef Task3Logic < handle
                         continue;
                     end
                     
-                    % Not a stimulus message, or offset cannot be computed
-                    if numel(tokens) == 0 || numel(data(t).messages) <= m
-                        continue;
-                    end
+                    % Not a stimulus message
+                    if numel(tokens) == 0, continue; end;
                     
                     [~, onset] = min(abs(data(t).samples(:, 1) - double(data(t).messages(m).time)));
-                    [~, offset] = min(abs(data(t).samples(:, 1) - double(data(t).messages(m + 1).time)));
+                    
+                    % Offset cannot be computed, assume till end of trial
+                    if numel(data(t).messages) > m
+                      [~, offset] = min(abs(data(t).samples(:, 1) - double(data(t).messages(m + 1).time)));
+                    else
+                      offset = size(data(t).samples(:, 1), 1);
+                    end                                       
                     
                     s = 1;
                     
