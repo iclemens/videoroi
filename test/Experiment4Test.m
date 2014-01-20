@@ -1,4 +1,4 @@
-function DatasetGenerator(cfg)
+function Experiment4Test(cfg)
 
     function time = generate_samples(scfg)
     % GENERATE_SAMPLES  Writes all samples for a given trial 
@@ -27,8 +27,8 @@ function DatasetGenerator(cfg)
         time = scfg.startTime;
         fid = scfg.datasetFile;
         
-        timePerSample = 1000000/500;
-        timePerFrame = 1000000/30;
+        timePerSample = 1000000 / 500;
+        timePerFrame = 1000000 / 30;
         
         samplesPerFrame = ceil(timePerFrame / timePerSample);
         
