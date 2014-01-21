@@ -1,6 +1,17 @@
 function write_idf_header(cfg, fid)
 % WRITE_HEADER  Writes the file header.
 
+  function out = strjoin(elements, sep)
+    % Joins string like so:
+    %  STR1 SEP STR2 SEP STR3
+
+    out = elements{1};
+    
+    for i = 2:numel(elements)
+      out = [out sep elements{i}];
+    end
+  end
+
   if(~isfield(cfg, 'columns'))
       cfg.columns = {'Time', 'Type', 'Trial', ...
           'R Raw X [px]', 'R Raw Y [px]', 'R Dia X [px]', 'R Dia Y [px]', ...
@@ -38,3 +49,4 @@ function write_idf_header(cfg, fid)
 
   fprintf(fid, '%s\n', strjoin(cfg.columns, '\t'));
 
+end
