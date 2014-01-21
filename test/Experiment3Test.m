@@ -6,25 +6,26 @@ function Experiment3Test(cfg)
   
   % ROI Top (35 to 300) and ROI Bottom (400 to 700)
   
-  % ms, x, y
-  scenarios = { ...
-    ... %  - Constant fixation for entire duration (inside image)
-    {15000, 350, 100}, ...  % 1. Fixation inside ROI
-    {15000, 200, 600}, ...  % 2. Fixation outside image
-    {15000, 350, 350}, ...  % 3. Fixation outside ROI
-    ... %  - Fixation jumps to image 1000ms after image onset and away 1000ms before image offset.
-    {2000, 350, 100; 7000, 350, 100; 1500, 350, 100}, ...
-    {2000, 200, 600; 7000, 200, 600; 1500, 200, 600}, ...
-    {2000, 350, 350; 7000, 350, 350; 1500, 350, 350}, ...
-    ... % - Fixation jumps to image 250ms before image onset and away at image offset.
-    {750, 350, 100; 9250, 100, 350; 250, 350, 100}, ...
-    {750, 350, 600; 9250, 600, 350; 250, 350, 600}, ...
-    {750, 350, 350; 9250, 350, 350; 250, 350, 350}, ...
-    ... %  - Fixation jumps every 400ms, Outside image -> ROI 1 -> Image -> ROI 2 -> ROI 3 -> Outside
-    {
-    
-    }
-    };
+    % ms, x, y
+    if ~isfield(cfg, 'scenarios')
+      cfg.scenarios = { ...
+        ... %  - Constant fixation for entire duration (inside image)
+        {15000, 350, 100}, ...  % 1. Fixation inside ROI
+        {15000, 200, 600}, ...  % 2. Fixation outside image
+        {15000, 350, 350}, ...  % 3. Fixation outside ROI
+        ... %  - Fixation jumps to image 1000ms after image onset and away 1000ms before image offset.
+        {2000, 350, 100; 7000, 350, 100; 1500, 350, 100}, ...
+        {2000, 200, 600; 7000, 200, 600; 1500, 200, 600}, ...
+        {2000, 350, 350; 7000, 350, 350; 1500, 350, 350}, ...
+        ... % - Fixation jumps to image 250ms before image onset and away at image offset.
+        {750, 350, 100; 9250, 100, 350; 250, 350, 100}, ...
+        {750, 350, 600; 9250, 600, 350; 250, 350, 600}, ...
+        {750, 350, 350; 9250, 350, 350; 250, 350, 350} ...
+        ... %  - Fixation jumps every 400ms, Outside image -> ROI 1 -> Image -> ROI 2 -> ROI 3 -> Outside
+        %{}
+        };
+    end
+  
   
     function time = generate_samples(scfg)
     % GENERATE_SAMPLES  Writes all samples for a given trial 
@@ -37,7 +38,7 @@ function Experiment3Test(cfg)
         if ~isfield(scfg, 'prefixDuration'), scfg.prefixDuration = 500 * 1000; end
         if ~isfield(scfg, 'fixationDuration'), scfg.fixationDuration = 500 * 1000; end
         if ~isfield(scfg, 'trialDuration'), scfg.trialDuration = 9000 * 1000; end
-        if ~isfield(scfg, 'postpctDuration'), scfg.postpctduration = 500 * 1000; end
+        if ~isfield(scfg, 'postpctDuration'), scfg.postpctDuration = 500 * 1000; end
         
         time = scfg.startTime;
         fid = scfg.datasetFile;
@@ -50,7 +51,7 @@ function Experiment3Test(cfg)
         pctMsgFlag = 0;
         eopMsgFlag = 0;        
         
-        numberOfSamples = (scfg.postpctDuration + eopMsgTime - time) / 2;
+        numberOfSamples = (scfg.postpctDuration + eopMsgTime - time) / 2000;
         
         fprintf(fid, '%d\tMSG\t%d\t# Message: New trial: TrialNr = %d\n', time, scfg.trial - 1, scfg.trialNr);
 
@@ -81,15 +82,22 @@ function Experiment3Test(cfg)
     end
 
 
-    function main(cfg)
+    function generate_dataset(cfg)
       
         % Some random stimuli
         if ~isfield('stimuli', cfg)
           cfg.stimuli = { ...
             'Rafd090_26_Caucasian_female_fearful_frontal.jpg', ...
-            'Rafd090_05_Caucasian_male_angry_frontal.jpg', ...
-            'Rafd090_71_Caucasian_male_sad_frontal.jpg', ...
-            'Rafd090_33_Caucasian_male_happy_frontal.jpg' ...
+            'Rafd090_26_Caucasian_female_fearful_frontal.jpg', ...
+            'Rafd090_26_Caucasian_female_fearful_frontal.jpg', ...
+            ...
+            'Rafd090_26_Caucasian_female_fearful_frontal.jpg', ...
+            'Rafd090_26_Caucasian_female_fearful_frontal.jpg', ...
+            'Rafd090_26_Caucasian_female_fearful_frontal.jpg', ...
+            ...
+            'Rafd090_26_Caucasian_female_fearful_frontal.jpg', ...
+            'Rafd090_26_Caucasian_female_fearful_frontal.jpg', ...
+            'Rafd090_26_Caucasian_female_fearful_frontal.jpg' ...
             };
         end
 
@@ -102,7 +110,7 @@ function Experiment3Test(cfg)
         write_idf_header(cfg, cfg.datasetFile);
         
         % Loop over trials (one per stimulus)
-        for i = 1:length(cfg.stimuli)            
+        for i = 1:numel(cfg.scenarios)        
             scfg = struct();
             scfg.datasetFile = cfg.datasetFile;
             scfg.startTime = time;
@@ -112,6 +120,7 @@ function Experiment3Test(cfg)
             
             % Stimulus
             scfg.filename = cfg.stimuli{i};
+            scfg.scenario = cfg.scenarios{i};
             scfg.picturePosition = [279 34];
             
             time = generate_samples(scfg);            
@@ -120,6 +129,15 @@ function Experiment3Test(cfg)
         fclose(cfg.datasetFile);
     end
 
+
+    function main(cfg)
+        cfg.datasetFilename = 'work/fakedata.txt';
+        cfg.analysisFilename = 'work/fakeanalysis.csv';
+
+        generate_dataset(cfg);
+
+    end
+    
     main(cfg);
 
 end
