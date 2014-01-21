@@ -217,3 +217,5 @@ pip-log.txt
 .mr.developer.cfg
 
 *.mexmaci64
+
+test/work/fakedata.txt
