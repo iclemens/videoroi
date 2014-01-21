@@ -47,6 +47,6 @@ function write_idf_header(cfg, fid)
   fprintf(fid, '## \n');
   fprintf(fid, '\n');
 
-  fprintf(fid, '%s\n', strjoin(cfg.columns, '\t'));
+  fprintf(fid, '%s\n', strjoin(cfg.columns, char(9)));
 
 end
