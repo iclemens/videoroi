@@ -124,6 +124,8 @@ classdef VideoROIDatasetView < EventProvider
       for i = 1:numel(child)
         delete(child(i));
       end
+
+      if numel(time) < 1, return; end;
       
       obj.offsetTime = time(1);
       time = time - obj.offsetTime;

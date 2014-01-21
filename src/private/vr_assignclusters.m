@@ -89,7 +89,7 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
         if ~any(strcmp(uniqueRegions{t}, cfg.stimuli{t}(s).regionLabels{r}))
           uniqueRegions{t}{end + 1} = cfg.stimuli{t}(s).regionLabels{r};
         end
-      end
+      end      
       
       cfg.stimuli{t}(s).regionState = roiState;
       cfg.stimuli{t}(s).sceneChange = sceneChange;
@@ -139,7 +139,7 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
           
           % Find global region id
           ur_id = strcmp(uniqueRegions{t}, cfg.stimuli{t}(s).regionLabels{r});
-          
+                    
           delta_score = compute_score( ...
             data.trials{t}(sel, [col_px, col_py]), ...
             squeeze(cfg.stimuli{t}(s).regionPositions(r, :, :)));
@@ -155,8 +155,8 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
         stim_nr = 0;               
         score = NaN;
       else      
-        score_by_region = sum(scores) / total;
-      
+        score_by_region = sum(scores, 1) / total;
+              
         % Find region with maximum score        
         outside_score = 1 - sum(score_by_region);
         [score, roi_nr] = max(score_by_region);

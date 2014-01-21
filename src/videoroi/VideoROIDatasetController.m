@@ -113,9 +113,14 @@ classdef VideoROIDatasetController < handle
       obj.view.updateTrace( ...
         samples(:, col_time) /1e6, ...
         samples(:, [col_x col_y]));
-            
-      obj.beginTime = samples(1, col_time) / 1e6;
-      obj.endTime = samples(end, col_time) / 1e6;
+
+      if isempty(samples)
+        obj.beginTime = 0;
+        obj.endTime = 0;
+      else
+        obj.beginTime = samples(1, col_time) / 1e6;
+        obj.endTime = samples(end, col_time) / 1e6;
+      end
       
       obj.totalTime = obj.endTime - obj.beginTime;
       obj.view.setTotalTime(obj.totalTime);

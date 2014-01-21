@@ -2,6 +2,8 @@ classdef Task2Logic < handle
 %
 % Implements logic specific to Gerine her second experiment.
 %
+% Four faces in a 2x2 grid.
+%
 % Usual image locations:
 %  (Left, Top) = (276, 34)
 %  (Left, Top) = (516, 34)

@@ -1,6 +1,7 @@
 classdef Task3Logic < handle
 %
 % Implements logic specific to Gerine her third experiment.
+%  Four pictures in a 2x2 grid.
 %
 
     % Settings

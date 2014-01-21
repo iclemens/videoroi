@@ -121,9 +121,13 @@ classdef VideoROIDataset < handle
             col_time = strcmp(obj.header.Columns, 'Time');            
             [~, sample] = min(abs(obj.data(trialId).samples(:, col_time) - time));
             
-            stimuli = obj.data(trialId).stimulus( ...
-                [obj.data(trialId).stimulus.onset] <= sample & ...
-                [obj.data(trialId).stimulus.offset] >= sample);
+            if ~isempty(sample)
+              stimuli = obj.data(trialId).stimulus( ...
+                  [obj.data(trialId).stimulus.onset] <= sample & ...
+                  [obj.data(trialId).stimulus.offset] >= sample);
+            else
+              stimuli = obj.data(trialId).stimulus([]);
+            end
         end
         
         
@@ -185,6 +189,11 @@ classdef VideoROIDataset < handle
             
             columns{end + 1} = 'Fixation mask';
             columns{end + 1} = 'Saccade mask';
+
+            if isempty(first) || isempty(last)
+              samples = zeros(0, length(columns));
+              return;
+            end
             
             % Handle infinity (i.e. from beginning or until end)
             if(isinf(first)) || (first < 1), first = 1; end;

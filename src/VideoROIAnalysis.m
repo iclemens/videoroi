@@ -20,6 +20,7 @@ function VideoROIAnalysis(cfg)
     
     if isfield(cfg, 'project')
       cfg = vr_checkconfig(cfg, 'validate', {'project', @(v) isa(v, 'VideoROIProject')});
+      cfg.projectdirectory = '';
     else
       cfg = vr_checkconfig(cfg, 'defaults', {'projectdirectory', @(x) uigetdir('', 'Open project directory')});
       cfg = vr_checkconfig(cfg, 'validate', {'projectdirectory', @(v) ~isempty(v) && ischar(v) && exist(v, 'dir') == 7});

@@ -248,6 +248,9 @@ classdef VideoROIProjectController < handle
       cfg = [];
       cfg.project = obj.project;
       cfg.outputfile = filename;
+      cfg.units = 'ms';
+      
+      VideoROIAnalysis(cfg);      
     end
   end
 end
