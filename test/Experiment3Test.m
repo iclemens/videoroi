@@ -55,11 +55,20 @@ function Experiment3Test(cfg)
         
         fprintf(fid, '%d\tMSG\t%d\t# Message: New trial: TrialNr = %d\n', time, scfg.trial - 1, scfg.trialNr);
 
+        % Initial point of fixation
+        ptr = 1; 
+        x = scfg.scenario{1, 2}; 
+        y = scfg.scenario{1, 3};
+        
         for j = 1:numberOfSamples
           time = time + 2000;
 
-          x = 0; y = 0;
-
+          if ptr < size(scfg.scenario, 1) && time >= scfg.scenario{ptr, 1}
+            ptr = ptr + 1;
+            x = scfg.scenario{ptr, 2}; 
+            y = scfg.scenario{ptr, 3};
+          end
+          
           % Inject messages into datafile
           if ~fixMsgFlag && (time >= fixMsgTime)
             fprintf(fid, '%d\tMSG\t%d\t# Message: Fixation\n', time, scfg.trial);
