@@ -109,18 +109,34 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
       
       fprintf('Warning: No regions defined in trial %d; trial duration was %d seconds.\n', t, duration / 1e6);
       continue;
-    end
+    end           
+
     
     % Remove fixations after scene change
     for s = 1:length(cfg.stimuli{t})
       if ~cfg.stimuli{t}(s).sceneChange, continue; end;
       
-      to_remove = data.time{t} >= cfg.stimuli{t}(s).onset & ...
-        data.time{t} <= cfg.stimuli{t}(s).onset + cfg.ignoreafterscenechange * 1000 * 1000;
+      to_remove = data.time{t} >= data.time{t}(cfg.stimuli{t}(s).onset) & ...
+        data.time{t} <= data.time{t}(cfg.stimuli{t}(s).onset) + cfg.ignoreafterscenechange * 1000 * 1000;
       
       data.trials{t}(to_remove, col_fixation_mask) = 0;
     end
-
+    
+    
+    % Remove data before and after stimulus presentation
+    first_onset = min(cfg.stimuli{t}.onset);
+    last_offset = max(cfg.stimuli{t}.offset);
+    
+    to_remove = false(size(data.time{t}));
+    to_remove(1:first_onset) = true;
+    to_remove(last_offset:end) = true;
+    
+    data.trials{t}(to_remove, col_fixation_mask) = 0;
+    
+    
+    if t == 10
+      disp('x');
+    end
 
     % Then cluster and assign ROIs
     clusters = idf_cluster_mask(data.trials{t}(:, col_fixation_mask));

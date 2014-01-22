@@ -180,7 +180,7 @@ function Experiment1Test(cfg)
     VideoROIAnalysis(cfg);    
   end
 
-  rmdir('work', 's');
+  if exist('work', 'dir'), rmdir('work', 's'); end
   mkdir('work');
   copyfile('~/Dropbox/Work/Gerine Task 1 thru 3/Taak 1/stimuli/Rafd090_01_Caucasian_female_angry_frontal.jpg', 'work/rafd090.jpg');
 

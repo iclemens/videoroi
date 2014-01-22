@@ -92,7 +92,7 @@ function VideoROIAnalysis(cfg)
             catch e
               descr = 'Unknown';
             end
-            
+
             for c = 1:size(fixations.trials{t})
                 if fixations.trials{t}(c, 2) == 0
                     region_label = 'OutsideRegions';
