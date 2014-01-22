@@ -282,7 +282,7 @@ classdef VideoROIProjectView < EventProvider
         %
         function onAddStimulus(obj, ~)
             if obj.projectOpen
-                fileTypes = {'*.wmv', 'Video files'; '*.jpg', 'Image files'};
+                fileTypes = {'*.wmv;*.avi;*.mpg;*.mpeg', 'Video files'; '*.jpg;*.jpeg;*.png;*.bmp;*.gif', 'Image files'};
                 
                 [filenames, pathname] = uigetfile( ...
                     fileTypes, 'Add stimulus', ...
