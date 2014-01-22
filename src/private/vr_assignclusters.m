@@ -101,7 +101,13 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
     nregions = numel(uniqueRegions{t});
     
     if nregions == 0
-      fprintf('Warning: No regions defined in trial.\n');
+      try
+        duration = data.time{t}(end) - data.time{t}(1);
+      catch
+        duration = 0;
+      end
+      
+      fprintf('Warning: No regions defined in trial %d; trial duration was %d seconds.\n', t, duration / 1e6);
       continue;
     end
     
