@@ -124,8 +124,8 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
     
     
     % Remove data before and after stimulus presentation
-    first_onset = min(cfg.stimuli{t}.onset);
-    last_offset = max(cfg.stimuli{t}.offset);
+    first_onset = min([cfg.stimuli{t}.onset]);
+    last_offset = max([cfg.stimuli{t}.offset]);
     
     to_remove = false(size(data.time{t}));
     to_remove(1:first_onset) = true;

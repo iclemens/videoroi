@@ -67,12 +67,18 @@ classdef Task2Logic < handle
                     end
                     
                     % Not a stimulus message, or offset cannot be computed
-                    if numel(tokens) == 0 || numel(data(t).messages) <= m
+                    if numel(tokens) == 0 || numel(data(t).messages) < m
                         continue;
-                    end
+                    end                    
                     
                     [~, onset] = min(abs(data(t).samples(:, 1) - double(data(t).messages(m).time)));
-                    [~, offset] = min(abs(data(t).samples(:, 1) - double(data(t).messages(m + 1).time)));
+                    
+                    if numel(data(t).messages) >= (m + 1)
+                      [~, offset] = min(abs(data(t).samples(:, 1) - double(data(t).messages(m + 1).time)));
+                    else
+                      offset = 3999 + onset;
+                      fprintf('Warning final message not found for trial %d, using default (4000 samples).\n', t);
+                    end
                     
                     s = 1;
                     

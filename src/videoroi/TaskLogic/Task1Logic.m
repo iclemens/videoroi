@@ -48,7 +48,7 @@ classdef Task1Logic < handle
         function data = parseStimulusMsgs(~, data)
             expr = 'Picture: Left: ([0-9]*) top: ([0-9]*) Name: ([^\s])*';
 
-            for t = 1:length(data)
+            for t = 1:length(data)             
                 for m = 1:length(data(t).messages)
                     try
                         tokens = regexp(data(t).messages(m).message, expr, 'tokens');
