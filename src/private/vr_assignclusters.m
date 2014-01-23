@@ -132,11 +132,6 @@ function [output, uniqueRegions] = vr_assignclusters(cfg, data)
     to_remove(last_offset:end) = true;
     
     data.trials{t}(to_remove, col_fixation_mask) = 0;
-    
-    
-    if t == 10
-      disp('x');
-    end
 
     % Then cluster and assign ROIs
     clusters = idf_cluster_mask(data.trials{t}(:, col_fixation_mask));
