@@ -53,7 +53,7 @@ function VideoROIStimulusStats(cfg)
       % roi, 1, pos
       % X Y W H
       
-      area = positions(:, :, 3) .* positions(:, :, 4) .* states;      
+      area = ceil(positions(:, :, 3)) .* ceil(positions(:, :, 4)) .* states;
       totalArea = totalArea + area;
       screenArea = screenArea + (1024 * 768);
     end
