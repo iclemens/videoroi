@@ -117,7 +117,7 @@ classdef VideoROIDatasetView < EventProvider
     end
     
     
-    function updateTrace(obj, time, position)
+    function updateTrace(obj, time, position, mask)
       h = obj.traceAxes.getHandle();
       
       child = get(h, 'Children');
@@ -131,6 +131,10 @@ classdef VideoROIDatasetView < EventProvider
       time = time - obj.offsetTime;
       plot(h, time * 1e3, position(:, 1), 'b');
       plot(h, time * 1e3, position(:, 2), 'r');
+      
+      mask = logical(mask);
+      plot(h, time(mask) * 1e3, position(mask, 1), 'b.');
+      plot(h, time(mask) * 1e3, position(mask, 2), 'r.');
     end
     
     

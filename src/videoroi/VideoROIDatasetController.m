@@ -109,10 +109,12 @@ classdef VideoROIDatasetController < handle
       col_time = find(strcmp(columns, 'Time'));
       col_x = find(strcmp(columns, 'R POR X [px]'));
       col_y = find(strcmp(columns, 'R POR Y [px]'));
+      col_fix = find(strcmp(columns, 'Fixation mask'));
       
       obj.view.updateTrace( ...
         samples(:, col_time) /1e6, ...
-        samples(:, [col_x col_y]));
+        samples(:, [col_x col_y]), ...
+        samples(:, col_fix));
 
       if isempty(samples)
         obj.beginTime = 0;
