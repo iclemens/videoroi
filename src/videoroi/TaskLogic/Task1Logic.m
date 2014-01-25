@@ -38,7 +38,7 @@ classdef Task1Logic < handle
           
             num = str2double(tokens{1});
           
-            descr = sprintf('%02d/%s/%s', num, tokens{2}, tokens{3});
+            descr = sprintf('%02d/%s/%s/%s/%s', num, tokens{2}, tokens{3}, tokens{4}, tokens{5});
           catch e
             descr = name;
           end
