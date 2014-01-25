@@ -30,6 +30,7 @@ function VideoROIAnalysis(cfg)
     cfg = vr_checkconfig(cfg, 'defaults', {'ignoreafterscenechange', 0.15});
     cfg = vr_checkconfig(cfg, 'defaults', {'minimumfixationduration', 0.10});
     cfg = vr_checkconfig(cfg, 'defaults', {'method', 'highest_score'});
+    cfg = vr_checkconfig(cfg, 'defaults', {'trialtime', True});
     
     % Open project and output file
     if isfield(cfg, 'project')
@@ -60,7 +61,13 @@ function VideoROIAnalysis(cfg)
         for t = 1:dataset.getNumberOfTrials();
             stimuli{t} = dataset.getStimuliForTrial(t);
             [samples, columns] = dataset.getAnnotationsForTrial(t);
-            data.time{t} = samples(:, 1);
+            
+            if cfg.trialtime
+              data.time{t} = samples(:, 1) - samples(1, 1);
+            else
+              data.time{t} = samples(:, 1);
+            end
+            
             data.trials{t} = samples(:, 2:end);
         end
 
