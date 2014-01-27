@@ -62,7 +62,7 @@ function VideoROIAnalysis(cfg)
             stimuli{t} = dataset.getStimuliForTrial(t);
             [samples, columns] = dataset.getAnnotationsForTrial(t);
             
-            if cfg.trialtime
+            if cfg.trialtime && numel(samples) > 0
               data.time{t} = samples(:, 1) - samples(1, 1);
             else
               data.time{t} = samples(:, 1);
