@@ -30,7 +30,7 @@ function VideoROIAnalysis(cfg)
     cfg = vr_checkconfig(cfg, 'defaults', {'ignoreafterscenechange', 0.15});
     cfg = vr_checkconfig(cfg, 'defaults', {'minimumfixationduration', 0.10});
     cfg = vr_checkconfig(cfg, 'defaults', {'method', 'highest_score'});
-    cfg = vr_checkconfig(cfg, 'defaults', {'trialtime', True});
+    cfg = vr_checkconfig(cfg, 'defaults', {'trialtime', true});
     
     % Open project and output file
     if isfield(cfg, 'project')
