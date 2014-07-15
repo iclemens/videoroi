@@ -30,6 +30,11 @@ classdef Task1Logic < handle
 
 
         function descr = getTrialDescription(~, stimuli)
+          if numel(stimuli) == 0
+            descr = '';
+            return;
+          end
+            
           name = lower(stimuli(1).name);
           
           try
